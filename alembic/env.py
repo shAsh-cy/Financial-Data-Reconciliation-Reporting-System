@@ -10,6 +10,8 @@ from app.database.session import get_sync_url
 from app.models.base import Base
 
 # Import models so metadata is populated for autogenerate
+from app.models.ledger import Ledger  # noqa: F401
+from app.models.transaction import Transaction  # noqa: F401
 from app.models.user import User  # noqa: F401
 
 config = context.config
