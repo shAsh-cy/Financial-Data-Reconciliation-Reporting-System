@@ -40,6 +40,10 @@ class CelerySettings(BaseSettings):
 
     BROKER_URL: str = ""
     RESULT_BACKEND: str = ""
+    TASK_DEFAULT_RETRY_DELAY: int = 60
+    TASK_MAX_RETRIES: int = 3
+    TASK_RETRY_BACKOFF: bool = True
+    TASK_RETRY_BACKOFF_MAX: int = 600
 
 
 class Settings(BaseSettings):
