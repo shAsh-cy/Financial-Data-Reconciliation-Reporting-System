@@ -9,6 +9,9 @@ from sqlalchemy import pool
 from app.database.session import get_sync_url
 from app.models.base import Base
 
+# Import models so metadata is populated for autogenerate
+from app.models.user import User  # noqa: F401
+
 config = context.config
 
 if config.config_file_name is not None:
