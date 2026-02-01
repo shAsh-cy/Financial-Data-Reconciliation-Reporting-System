@@ -4,10 +4,13 @@ from fastapi import FastAPI
 
 from app.api.routes import api_router
 from app.core.config import settings
+from app.core.logging import setup_logging
 
 
 def create_application() -> FastAPI:
     """Create and configure the FastAPI application."""
+    setup_logging()
+
     app = FastAPI(
         title="Financial Data Reconciliation & Reporting System",
         version="0.1.0",

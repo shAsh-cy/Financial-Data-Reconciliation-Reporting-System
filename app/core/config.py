@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     APP_ENV: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
+    LOG_LEVEL: str = "INFO"
 
     @property
     def database(self) -> DatabaseSettings:
