@@ -43,6 +43,12 @@ app/
    uvicorn app.main:app --reload
    ```
 
+5. Run the Celery worker (requires Redis):
+   ```bash
+   celery -A app.workers.celery_app worker -l info
+   ```
+   Or: `python -m app.workers`
+
 ## License
 
 Proprietary
