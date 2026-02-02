@@ -11,6 +11,10 @@ from app.models.base import Base
 
 # Import models so metadata is populated for autogenerate
 from app.models.ledger import Ledger  # noqa: F401
+from app.models.reconciliation import (  # noqa: F401
+    ReconciliationItem,
+    ReconciliationRun,
+)
 from app.models.transaction import Transaction  # noqa: F401
 from app.models.user import User  # noqa: F401
 
