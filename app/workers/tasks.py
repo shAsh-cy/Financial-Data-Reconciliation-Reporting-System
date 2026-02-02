@@ -9,6 +9,7 @@ from uuid import UUID
 import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert
 
 from app.database.session import async_session_factory
 from app.models import (
@@ -393,4 +394,53 @@ def generate_liquidity_report(
     """
     report_id = asyncio.run(_generate_liquidity_report_async(config_json, as_of_date))
     return str(report_id)
+
+
+@app.task(bind=True, name="transactions.ingest_batch")
+def ingest_transactions_batch(self, payload: dict) -> int:
+    """
+    Celery task to ingest a batch of transactions.
+
+    Input is a dict matching `TransactionIngestRequest` (JSON-serializable).
+    Idempotent at the DB level via ON CONFLICT DO NOTHING.
+    """
+    from app.schemas.transactions import TransactionIngestRequest  # local import to avoid cycles
+
+    async def _ingest(payload_dict: dict) -> int:
+        request = TransactionIngestRequest.model_validate(payload_dict)
+        from uuid import uuid4
+
+        async with async_session_factory() as session:
+            # Build rows for bulk insert
+            rows: list[dict] = []
+            for item in request.transactions:
+                rows.append(
+                    {
+                        "id": uuid4(),
+                        "ledger_id": request.ledger_id,
+                        "external_id": item.external_id,
+                        "transaction_date": item.transaction_date,
+                        "amount": item.amount,
+                        "currency": item.currency,
+                        "type": item.type,
+                        "description": item.description,
+                        "reference": item.reference,
+                        "status": "posted",
+                    }
+                )
+
+            if not rows:
+                return 0
+
+            stmt = (
+                insert(Transaction)
+                .values(rows)
+                .on_conflict_do_nothing(index_elements=["ledger_id", "external_id"])
+            )
+            result = await session.execute(stmt)
+            await session.commit()
+            # result.rowcount may be None depending on backend; fall back to len(rows)
+            return int(result.rowcount or 0)
+
+    return asyncio.run(_ingest(payload))
 
