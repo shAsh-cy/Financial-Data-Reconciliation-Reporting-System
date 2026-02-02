@@ -10,6 +10,7 @@ from app.database.session import get_sync_url
 from app.models.base import Base
 
 # Import models so metadata is populated for autogenerate
+from app.models.financial_report import FinancialReport  # noqa: F401
 from app.models.ledger import Ledger  # noqa: F401
 from app.models.reconciliation import (  # noqa: F401
     ReconciliationItem,
