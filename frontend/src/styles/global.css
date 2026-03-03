@@ -1,0 +1,33 @@
+:root {
+  color-scheme: light;
+  --bg: #0b1220;
+  --panel: #0f1a2e;
+  --muted: #95a3b8;
+  --text: #e6edf6;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #4f7cff;
+  --danger: #ff4d4f;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
