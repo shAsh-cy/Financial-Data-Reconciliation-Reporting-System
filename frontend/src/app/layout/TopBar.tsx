@@ -1,39 +1,92 @@
 import { useNavigate } from "react-router-dom";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  IconButton,
+  Box,
+} from "@mui/material";
+import { Menu as MenuIcon } from "@mui/icons-material";
 
-import { Button } from "../../components/ui/Button";
 import { useAuth } from "../state/useAuth";
 
-import styles from "./TopBar.module.css";
+type TopBarProps = {
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
+};
 
-export function TopBar() {
+export function TopBar({ onMenuClick, showMenuButton }: TopBarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const roleLabel =
+    user?.role === "admin"
+      ? "Admin"
+      : user?.role === "accountant"
+        ? "Accountant"
+        : user?.role === "viewer"
+          ? "Viewer"
+          : user?.role ?? "—";
+
   return (
-    <header className={styles.bar}>
-      <div className={styles.meta}>Environment-driven API • Auditable workflows</div>
-      <div className={styles.meta}>
-        {user ? (
-          <>
-            <span className={styles.email}>{user.email}</span>
-            <span>({user.role})</span>
-            <Button
-              variant="default"
-              onClick={() => {
-                logout();
-                navigate("/login", { replace: true });
-              }}
+    <AppBar
+      position="static"
+      elevation={0}
+      sx={{
+        bgcolor: "background.paper",
+        color: "text.primary",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {showMenuButton && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={onMenuClick}
+              sx={{ mr: 1 }}
             >
-              Sign out
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Typography variant="body2" color="text.secondary">
+            Environment-driven API • Auditable workflows
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {user ? (
+            <>
+              <Typography variant="body2" color="text.secondary">
+                <Box component="span" sx={{ fontWeight: 600, color: "text.primary" }}>
+                  {user.email}
+                </Box>
+                {" · "}
+                <Box component="span" sx={{ color: "primary.main" }}>
+                  {roleLabel}
+                </Box>
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  logout();
+                  navigate("/login", { replace: true });
+                }}
+              >
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <Button variant="contained" size="small" onClick={() => navigate("/login")}>
+              Sign in
             </Button>
-          </>
-        ) : (
-          <Button variant="default" onClick={() => navigate("/login")}>
-            Sign in
-          </Button>
-        )}
-      </div>
-    </header>
+          )}
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 }
-

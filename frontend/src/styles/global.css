@@ -1,12 +1,12 @@
 :root {
   color-scheme: light;
-  --bg: #0b1220;
-  --panel: #0f1a2e;
-  --muted: #95a3b8;
-  --text: #e6edf6;
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #4f7cff;
-  --danger: #ff4d4f;
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --muted: #64748b;
+  --text: #1e293b;
+  --border: #e2e8f0;
+  --accent: #1976d2;
+  --danger: #c62828;
 }
 
 html,
@@ -16,10 +16,6 @@ body {
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
-    "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 a {
