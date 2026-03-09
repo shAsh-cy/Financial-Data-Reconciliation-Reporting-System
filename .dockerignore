@@ -1,0 +1,35 @@
+# Git and env
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv
+.venv
+*.egg-info
+.eggs
+
+# Frontend (not needed in api/worker images)
+frontend
+
+# IDE and OS
+.idea
+.vscode
+*.swp
+.DS_Store
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Docs and tests (optional: include if worker runs tests)
+*.md
+!README.md
