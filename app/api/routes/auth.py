@@ -13,8 +13,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=TokenResponse)
 async def login_for_access_token(
+    session: DbSession,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    session: DbSession = Depends(),
 ) -> TokenResponse:
     """
     Authenticate user and issue access token.

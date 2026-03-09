@@ -5,8 +5,6 @@ from decimal import Decimal
 import pytest
 
 from app.services.reconciliation import (
-    Match,
-    ReconciliationResult,
     TransactionRecord,
     build_match_key,
     reconcile,
@@ -49,6 +47,17 @@ class TestBuildMatchKey:
         }
         keys = ("amount", "transaction_date", "reference")
         assert build_match_key(r, keys) == (Decimal("100"), "2024-01-15", "")
+
+    def test_reference_whitespace_normalized_for_matching(self) -> None:
+        """Records with same reference (different whitespace) match via normalized key."""
+        left: list[TransactionRecord] = [
+            {"amount": 100, "transaction_date": "2024-01-15", "reference": " REF1 "},
+        ]
+        right: list[TransactionRecord] = [
+            {"amount": 100, "transaction_date": "2024-01-15", "reference": "REF1"},
+        ]
+        result = reconcile(left, right)
+        assert result.match_count == 1
 
 
 class TestReconcile:
@@ -132,7 +141,9 @@ class TestReconcile:
         result_amount_date = reconcile(left, right, match_keys=("amount", "transaction_date"))
         assert result_amount_date.match_count == 1
 
-        result_with_ref = reconcile(left, right, match_keys=("amount", "transaction_date", "reference"))
+        result_with_ref = reconcile(
+            left, right, match_keys=("amount", "transaction_date", "reference")
+        )
         assert result_with_ref.match_count == 0
 
     def test_one_to_one_matching_with_duplicates(self) -> None:
@@ -149,3 +160,35 @@ class TestReconcile:
         assert result.match_count == 2
         assert result.unmatched_left_count == 0
         assert result.unmatched_right_count == 0
+
+    def test_partial_match_with_unmatched_on_both_sides(self) -> None:
+        """Realistic scenario: some match, some only on left, some only on right."""
+        left: list[TransactionRecord] = [
+            {"id": "L1", "amount": 100, "transaction_date": "2024-01-15", "reference": "INV-001"},
+            {"id": "L2", "amount": 200, "transaction_date": "2024-01-16", "reference": "INV-002"},
+            {"id": "L3", "amount": 300, "transaction_date": "2024-01-17", "reference": "INV-003"},
+        ]
+        right: list[TransactionRecord] = [
+            {"id": "R1", "amount": 100, "transaction_date": "2024-01-15", "reference": "INV-001"},
+            {"id": "R2", "amount": 250, "transaction_date": "2024-01-16", "reference": "INV-002B"},
+            {"id": "R3", "amount": 400, "transaction_date": "2024-01-18", "reference": "INV-004"},
+        ]
+        result = reconcile(left, right)
+        assert result.match_count == 1
+        assert result.matches[0].left["id"] == "L1"
+        assert result.matches[0].right["id"] == "R1"
+        assert result.unmatched_left_count == 2
+        assert result.unmatched_right_count == 2
+
+    def test_amount_mismatch_no_match(self) -> None:
+        """Same date/reference but different amount does not match."""
+        left: list[TransactionRecord] = [
+            {"amount": 100, "transaction_date": "2024-01-15", "reference": "R1"},
+        ]
+        right: list[TransactionRecord] = [
+            {"amount": 100.01, "transaction_date": "2024-01-15", "reference": "R1"},
+        ]
+        result = reconcile(left, right)
+        assert result.match_count == 0
+        assert result.unmatched_left_count == 1
+        assert result.unmatched_right_count == 1
