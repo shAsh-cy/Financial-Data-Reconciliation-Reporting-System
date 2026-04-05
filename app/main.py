@@ -17,6 +17,18 @@ def create_application() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
     )
+
+    @app.get("/")
+    def root() -> dict[str, str]:
+        """Root URL: API only. Use the frontend app for the web UI."""
+        return {
+            "service": app.title,
+            "version": app.version,
+            "docs": "/docs",
+            "health": f"{settings.API_V1_PREFIX}/health",
+            "note": "This is the JSON API. Run `npm run dev` in /frontend for the dashboard UI.",
+        }
+
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     return app
 
