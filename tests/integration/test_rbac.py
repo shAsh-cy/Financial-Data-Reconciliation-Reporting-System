@@ -34,6 +34,9 @@ async def test_viewer_can_access_reporting(
     )
 
     assert response.status_code == 200
+    payload = response.json()
+    assert "items" in payload and "total" in payload
+    assert isinstance(payload["items"], list)
 
 
 @pytest.mark.integration

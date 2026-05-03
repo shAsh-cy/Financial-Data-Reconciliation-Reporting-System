@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ReconciliationRunRead(BaseModel):
@@ -19,8 +19,7 @@ class ReconciliationRunRead(BaseModel):
     unmatched_right_count: int
     error_message: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReconciliationItemRead(BaseModel):
@@ -30,8 +29,7 @@ class ReconciliationItemRead(BaseModel):
     right_transaction_id: UUID | None
     match_type: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FinancialReportRead(BaseModel):
@@ -62,6 +60,25 @@ class FinancialReportRead(BaseModel):
     cash_ratio: Decimal | None
     working_capital: Decimal | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReconciliationRunListResponse(BaseModel):
+    """Paginated reconciliation runs (empty DB is items=[], total=0)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[ReconciliationRunRead]
+    total: int
+    is_demo: bool = False
+
+
+class FinancialReportListResponse(BaseModel):
+    """Paginated financial reports (empty DB is items=[], total=0)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[FinancialReportRead]
+    total: int
+    is_demo: bool = False
 

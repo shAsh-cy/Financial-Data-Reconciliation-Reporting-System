@@ -19,6 +19,18 @@ export type ReconciliationItemRead = {
   match_type: string;
 };
 
+export type ReconciliationRunListResponse = {
+  items: ReconciliationRunRead[];
+  total: number;
+  is_demo: boolean;
+};
+
+export type FinancialReportListResponse = {
+  items: FinancialReportRead[];
+  total: number;
+  is_demo: boolean;
+};
+
 export type FinancialReportRead = {
   id: string;
   report_type: string;

@@ -1,5 +1,5 @@
 import { getApiClient } from "../../../api/client";
-import type { FinancialReportRead } from "../../../types/reporting";
+import type { FinancialReportListResponse, FinancialReportRead } from "../../../types/reporting";
 
 export const reportsApi = {
   async listReports(
@@ -7,10 +7,10 @@ export const reportsApi = {
     limit = 50,
     offset = 0,
   ): Promise<FinancialReportRead[]> {
-    const res = await getApiClient().get<FinancialReportRead[]>("/api/v1/reporting/reports", {
+    const res = await getApiClient().get<FinancialReportListResponse>("/api/v1/reporting/reports", {
       params: { report_type: reportType, limit, offset },
     });
-    return res.data;
+    return res.data.items;
   },
 
   async getReport(reportId: string): Promise<FinancialReportRead> {

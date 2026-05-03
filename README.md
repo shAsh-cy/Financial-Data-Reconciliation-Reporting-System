@@ -65,6 +65,16 @@ app/
    ```
    Or: `python -m app.workers`
 
+## Reporting list APIs
+
+`GET /api/v1/reporting/reports` and `GET /api/v1/reporting/reconciliations` (and aliases `GET /api/v1/reports`, `GET /api/v1/reconciliations`) return:
+
+```json
+{ "items": [], "total": 0, "is_demo": false }
+```
+
+When the database has **no rows** and `REPORTING_DEMO_FALLBACK=true` (default in `.env.example`), responses include deterministic demo `items` and `is_demo: true`. Set `REPORTING_DEMO_FALLBACK=false` in production if you prefer strict empty results.
+
 ## Creating a login user (no self-signup)
 
 This system uses the existing `/api/v1/auth/login` flow and does not expose a public sign-up UI.

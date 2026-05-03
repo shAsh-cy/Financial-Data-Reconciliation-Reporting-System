@@ -1,13 +1,17 @@
 import { getApiClient } from "../../../api/client";
-import type { ReconciliationItemRead, ReconciliationRunRead } from "../../../types/reporting";
+import type {
+  ReconciliationItemRead,
+  ReconciliationRunListResponse,
+  ReconciliationRunRead,
+} from "../../../types/reporting";
 
 export const reconciliationApi = {
   async listRuns(limit = 50, offset = 0): Promise<ReconciliationRunRead[]> {
-    const res = await getApiClient().get<ReconciliationRunRead[]>(
+    const res = await getApiClient().get<ReconciliationRunListResponse>(
       "/api/v1/reporting/reconciliations",
       { params: { limit, offset } },
     );
-    return res.data;
+    return res.data.items;
   },
 
   async getRun(runId: string): Promise<ReconciliationRunRead> {

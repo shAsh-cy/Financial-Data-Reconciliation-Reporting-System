@@ -2,42 +2,71 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import desc, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 
 from app.api.deps import DbSession, require_roles
-from app.models import FinancialReport, ReconciliationItem, ReconciliationRun, ReportType
+from app.models import FinancialReport, ReconciliationItem, ReconciliationRun
 from app.models.user import UserRole
 from app.schemas import (
+    FinancialReportListResponse,
     FinancialReportRead,
     ReconciliationItemRead,
+    ReconciliationRunListResponse,
     ReconciliationRunRead,
 )
-
+from app.services import reporting_read_service
 
 router = APIRouter(prefix="/reporting", tags=["reporting"])
+
+# Top-level aliases: GET /api/v1/reconciliations, GET /api/v1/reports
+top_level_list_router = APIRouter(tags=["reporting"])
 
 
 @router.get(
     "/reconciliations",
-    response_model=list[ReconciliationRunRead],
+    response_model=ReconciliationRunListResponse,
+)
+@top_level_list_router.get(
+    "/reconciliations",
+    response_model=ReconciliationRunListResponse,
 )
 async def list_reconciliation_runs(
     session: DbSession,
     _: None = Depends(require_roles(UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.VIEWER)),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
-) -> list[ReconciliationRunRead]:
-    """List reconciliation runs with basic pagination."""
-    stmt = (
-        select(ReconciliationRun)
-        .order_by(desc(ReconciliationRun.started_at.nullslast()))
-        .limit(limit)
-        .offset(offset)
+) -> ReconciliationRunListResponse:
+    """List reconciliation runs with pagination metadata."""
+    return await reporting_read_service.list_reconciliation_runs(
+        session,
+        limit=limit,
+        offset=offset,
     )
-    result = await session.execute(stmt)
-    runs = result.scalars().all()
-    return [ReconciliationRunRead.model_validate(run) for run in runs]
+
+
+@router.get(
+    "/reports",
+    response_model=FinancialReportListResponse,
+)
+@top_level_list_router.get(
+    "/reports",
+    response_model=FinancialReportListResponse,
+)
+async def list_financial_reports(
+    session: DbSession,
+    _: None = Depends(require_roles(UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.VIEWER)),
+    report_type: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+) -> FinancialReportListResponse:
+    """List financial reports with pagination metadata."""
+    return await reporting_read_service.list_financial_reports(
+        session,
+        report_type=report_type,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get(
@@ -54,8 +83,6 @@ async def get_reconciliation_run(
     result = await session.execute(stmt)
     run = result.scalar_one_or_none()
     if run is None:
-        from fastapi import HTTPException, status
-
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Run not found")
     return ReconciliationRunRead.model_validate(run)
 
@@ -85,27 +112,6 @@ async def list_reconciliation_items(
 
 
 @router.get(
-    "/reports",
-    response_model=list[FinancialReportRead],
-)
-async def list_financial_reports(
-    session: DbSession,
-    _: None = Depends(require_roles(UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.VIEWER)),
-    report_type: str | None = Query(None),
-    limit: int = Query(50, ge=1, le=500),
-    offset: int = Query(0, ge=0),
-) -> list[FinancialReportRead]:
-    """List financial reports (P&L and liquidity)."""
-    stmt = select(FinancialReport)
-    if report_type is not None:
-        stmt = stmt.where(FinancialReport.report_type == report_type)
-    stmt = stmt.order_by(desc(FinancialReport.period_end)).limit(limit).offset(offset)
-    result = await session.execute(stmt)
-    reports = result.scalars().all()
-    return [FinancialReportRead.model_validate(r) for r in reports]
-
-
-@router.get(
     "/reports/{report_id}",
     response_model=FinancialReportRead,
 )
@@ -119,8 +125,5 @@ async def get_financial_report(
     result = await session.execute(stmt)
     report = result.scalar_one_or_none()
     if report is None:
-        from fastapi import HTTPException, status
-
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
     return FinancialReportRead.model_validate(report)
-
