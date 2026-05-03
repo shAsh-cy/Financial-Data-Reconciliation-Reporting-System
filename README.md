@@ -57,7 +57,7 @@ app/
    npm run dev
    ```
    If you see `'vite' is not recognized`, run `npm install` again from the `frontend` folder (dependencies were not installed). Scripts use `npx vite` so the dev server resolves Vite reliably on Windows.
-   Open the URL Vite prints (usually `http://localhost:5173`). Set `VITE_API_BASE_URL=http://127.0.0.1:8000` in `frontend/.env` if needed.
+   Open the URL Vite prints (often `http://localhost:5173` or another port if busy). By default, Vite **proxies** `/api` → `http://127.0.0.1:8000`, so you do **not** need `frontend/.env` for login in dev as long as the API is on 8000. To call the API directly instead, set `VITE_API_BASE_URL=http://127.0.0.1:8000` in `frontend/.env`.
 
 6. Run the Celery worker (requires Redis):
    ```bash

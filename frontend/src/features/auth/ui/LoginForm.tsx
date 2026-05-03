@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type React from "react";
+import { isAxiosError } from "axios";
 
 import { authApi } from "../api/authApi";
 import { useAuth } from "../../../app/state/useAuth";
@@ -24,8 +25,19 @@ export function LoginForm() {
       setAccessToken(token.access_token);
       const me = await authApi.me();
       setUser(me);
-    } catch {
-      setError("Login failed. Please verify your email and password.");
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 404) {
+          setError(
+            "Could not reach the API (404). Ensure the backend is running on port 8000 and restart `npm run dev` so the /api proxy applies.",
+          );
+        } else {
+          setError("Login failed. Please verify your email and password.");
+        }
+      } else {
+        setError("Login failed. Please verify your email and password.");
+      }
       setAccessToken(null);
       setUser(null);
     } finally {
