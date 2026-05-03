@@ -21,7 +21,11 @@ async def authenticate_user(
 
     if user is None or not user.is_active:
         return None
-    if not verify_password(password, user.hashed_password):
+    try:
+        password_ok = verify_password(password, user.hashed_password)
+    except (ValueError, TypeError):
+        return None
+    if not password_ok:
         return None
     return user
 

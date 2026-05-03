@@ -28,7 +28,13 @@ async def login_for_access_token(
             detail="Incorrect email or password",
         )
 
-    access_token = create_user_access_token(user)
+    try:
+        access_token = create_user_access_token(user)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        ) from e
     return TokenResponse(access_token=access_token)
 
 
