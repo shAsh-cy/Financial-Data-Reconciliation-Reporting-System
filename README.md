@@ -36,7 +36,12 @@ app/
    pip install -r requirements.txt
    ```
 
-3. Copy `.env.example` to `.env` and set your values.
+3. Choose how you want to run Postgres/Redis:
+
+   - **Option A: Local Postgres (recommended for quick local dev)**
+   - **Option B: Docker Compose (production-like local deployment)**
+
+   Then copy `.env.example` to `.env` and set your values.
 
 4. Run the API (JSON backend only — there is no HTML at `http://127.0.0.1:8000/` besides the root JSON message):
    ```bash
@@ -70,6 +75,52 @@ After your database is reachable and migrations are applied:
 alembic upgrade head
 python scripts/create_user.py --email admin@company.com --password "ChangeMe123!" --role admin
 ```
+
+## Option A: Local Postgres (current recommendation)
+
+1. Install PostgreSQL and ensure it’s running on `localhost:5432`.
+
+2. Create a database + user (example):
+
+```sql
+CREATE USER app WITH PASSWORD 'change-me';
+CREATE DATABASE financial_reconciliation OWNER app;
+GRANT ALL PRIVILEGES ON DATABASE financial_reconciliation TO app;
+```
+
+3. Update `.env` to match your local DB user/password:
+
+```bash
+DATABASE_URL=postgresql+asyncpg://app:change-me@localhost:5432/financial_reconciliation
+JWT_SECRET_KEY=your-secret-key-min-32-chars
+```
+
+4. Run migrations + create your first user:
+
+```bash
+alembic upgrade head
+python scripts/create_user.py --email admin@company.com --password "ChangeMe123!" --role admin
+```
+
+5. Start API + frontend and sign in using that email/password.
+
+## Option B: Docker Compose (production-like local)
+
+1. Provide required environment variables (PowerShell example):
+
+```powershell
+$env:POSTGRES_PASSWORD="change-me"
+$env:JWT_SECRET_KEY="your-secret-key-min-32-chars"
+docker compose up -d --build
+```
+
+2. Create a user inside the API container:
+
+```bash
+docker compose exec api python scripts/create_user.py --email admin@company.com --password "ChangeMe123!" --role admin
+```
+
+3. Open the frontend at `http://localhost` (or `http://localhost:$env:FRONTEND_PORT` if you set it).
 
 ## License
 
