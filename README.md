@@ -60,6 +60,17 @@ app/
    ```
    Or: `python -m app.workers`
 
+## Creating a login user (no self-signup)
+
+This system uses the existing `/api/v1/auth/login` flow and does not expose a public sign-up UI.
+
+After your database is reachable and migrations are applied:
+
+```bash
+alembic upgrade head
+python scripts/create_user.py --email admin@company.com --password "ChangeMe123!" --role admin
+```
+
 ## License
 
 Proprietary
