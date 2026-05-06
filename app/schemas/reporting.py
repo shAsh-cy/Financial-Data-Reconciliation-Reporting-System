@@ -2,9 +2,10 @@
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class ReconciliationRunRead(BaseModel):
@@ -12,6 +13,8 @@ class ReconciliationRunRead(BaseModel):
     left_ledger_id: UUID
     right_ledger_id: UUID
     status: str
+    created_at: datetime
+    updated_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
     matched_count: int
@@ -21,6 +24,10 @@ class ReconciliationRunRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @computed_field
+    def unmatched_count(self) -> int:
+        return self.unmatched_left_count + self.unmatched_right_count
+
 
 class ReconciliationItemRead(BaseModel):
     id: UUID
@@ -28,8 +35,14 @@ class ReconciliationItemRead(BaseModel):
     left_transaction_id: UUID | None
     right_transaction_id: UUID | None
     match_type: str
+    #: Present for demo/synthetic rows; optional when not stored in DB.
+    amount: Decimal | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    def match_status(self) -> Literal["matched", "unmatched"]:
+        return "matched" if self.match_type == "matched" else "unmatched"
 
 
 class FinancialReportRead(BaseModel):
@@ -70,7 +83,7 @@ class ReconciliationRunListResponse(BaseModel):
 
     items: list[ReconciliationRunRead]
     total: int
-    is_demo: bool = False
+    meta: dict[str, Any] = Field(default_factory=dict)
 
 
 class FinancialReportListResponse(BaseModel):
@@ -80,5 +93,152 @@ class FinancialReportListResponse(BaseModel):
 
     items: list[FinancialReportRead]
     total: int
-    is_demo: bool = False
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class ReportStatementLine(BaseModel):
+    """Structured P&L / liquidity line (no plaintext blob)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    amount: Decimal | None = None
+    line_kind: Literal["revenue", "expense", "subtotal", "metric", "ratio"] = "metric"
+
+
+class ReportDetailSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    snapshot: FinancialReportRead
+    total_expenses: Decimal | None = None
+    gross_margin_pct: Decimal | None = None
+    net_margin_pct: Decimal | None = None
+    statement_lines: list[ReportStatementLine] = Field(default_factory=list)
+    quick_insights: list[str] = Field(default_factory=list)
+
+
+class ReportDetailTimeseriesPoint(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    period_end: date
+    revenue: Decimal | None = None
+    expenses: Decimal | None = None
+    net_income: Decimal | None = None
+    cashflow: Decimal | None = None
+
+
+class ReportBreakdownSlice(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    amount: Decimal | None = None
+    segment: Literal["revenue", "expense", "liquidity"] = "expense"
+
+
+class ReportDetailPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    summary: ReportDetailSummary
+    timeseries: list[ReportDetailTimeseriesPoint] = Field(default_factory=list)
+    breakdown: list[ReportBreakdownSlice] = Field(default_factory=list)
+
+
+class ReconciliationDetailSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run: ReconciliationRunRead
+    matched_lines: int
+    unmatched_lines: int
+    mismatch_rate_pct: Decimal | None = None
+    by_match_type: dict[str, int] = Field(default_factory=dict)
+    quick_insights: list[str] = Field(default_factory=list)
+
+
+class ReconciliationDetailTimeseriesPoint(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_id: UUID
+    period_label: str
+    matched_count: int
+    unmatched_count: int
+    status: str
+
+
+class ReconciliationBreakdownSlice(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    match_type: str
+    count: int
+
+
+class ReconciliationDetailPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    summary: ReconciliationDetailSummary
+    timeseries: list[ReconciliationDetailTimeseriesPoint] = Field(default_factory=list)
+    breakdown: list[ReconciliationBreakdownSlice] = Field(default_factory=list)
+
+
+class ReconciliationRunDetailEnvelope(BaseModel):
+    """Single reconciliation run (detail contract: nested summary/timeseries/breakdown)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    data: ReconciliationDetailPayload
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class FinancialReportDetailEnvelope(BaseModel):
+    """Single financial report (detail contract: nested summary/timeseries/breakdown)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID
+    data: ReportDetailPayload
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class ReconciliationItemListResponse(BaseModel):
+    """Paginated reconciliation items for a run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[ReconciliationItemRead]
+    total: int
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class ReportSummaryMetrics(BaseModel):
+    """Latest-period headline figures derived from stored reports."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    total_revenue: Decimal | None = None
+    total_expenses: Decimal | None = None
+    net_profit: Decimal | None = None
+    liquidity_ratio: Decimal | None = None
+
+
+class ReportTimeSeriesPoint(BaseModel):
+    """One period for PnL trend charts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    period_end: date
+    revenue: Decimal | None = None
+    expenses: Decimal | None = None
+    net_income: Decimal | None = None
+
+
+class ReportsOverviewResponse(BaseModel):
+    """Dashboard-oriented bundle: summary, trend series, and recent report jobs."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    summary: ReportSummaryMetrics
+    time_series: list[ReportTimeSeriesPoint]
+    items: list[FinancialReportRead]
+    total_report_count: int
+    meta: dict[str, Any] = Field(default_factory=dict)
 

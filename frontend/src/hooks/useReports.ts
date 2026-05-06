@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { FinancialReportRead } from "../types/reporting";
+import { type FinancialReportRead, isDemoMeta } from "../types/reporting";
 import { reportsApi } from "../features/reports/api/reportsApi";
 
 type UseReportsOptions = {
@@ -19,6 +19,8 @@ export function useReports(options: UseReportsOptions = {}) {
   } = options;
 
   const [reports, setReports] = useState<FinancialReportRead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isDemo, setIsDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +28,9 @@ export function useReports(options: UseReportsOptions = {}) {
     try {
       setError(null);
       const data = await reportsApi.listReports(reportType, limit, 0);
-      setReports(data);
+      setReports(data.items);
+      setTotal(data.total);
+      setIsDemo(isDemoMeta(data.meta));
     } catch {
       setError("Failed to load reports.");
     } finally {
@@ -47,5 +51,5 @@ export function useReports(options: UseReportsOptions = {}) {
     return () => clearInterval(id);
   }, [pollWhenRunning, loading, reports, pollIntervalMs, fetchReports]);
 
-  return { reports, loading, error, refetch: fetchReports };
+  return { reports, total, isDemo, loading, error, refetch: fetchReports };
 }

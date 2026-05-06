@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
     LOG_LEVEL: str = "INFO"
-    #: When true and the DB has no rows, list endpoints return deterministic demo payloads with is_demo=true.
+    #: When true, read APIs may return deterministic demo payloads (meta.is_demo on JSON responses).
     REPORTING_DEMO_FALLBACK: bool = True
 
     @property

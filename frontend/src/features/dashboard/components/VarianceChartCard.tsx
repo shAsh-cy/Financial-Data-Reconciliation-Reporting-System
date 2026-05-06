@@ -11,7 +11,7 @@ type VarianceChartCardProps = {
 
 export function VarianceChartCard({ data, loading, error }: VarianceChartCardProps) {
   return (
-    <Card>
+    <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
       <CardContent>
         <Typography variant="subtitle1" gutterBottom>
           Variance Trend

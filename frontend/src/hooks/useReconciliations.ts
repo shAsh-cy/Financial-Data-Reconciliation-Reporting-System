@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { ReconciliationRunRead } from "../types/reporting";
+import { type ReconciliationRunRead, isDemoMeta } from "../types/reporting";
 import { reconciliationApi } from "../features/reconciliation/api/reconciliationApi";
 
 type UseReconciliationsOptions = {
@@ -17,6 +17,8 @@ export function useReconciliations(options: UseReconciliationsOptions = {}) {
   } = options;
 
   const [runs, setRuns] = useState<ReconciliationRunRead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isDemo, setIsDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,9 @@ export function useReconciliations(options: UseReconciliationsOptions = {}) {
     try {
       setError(null);
       const data = await reconciliationApi.listRuns(limit, 0);
-      setRuns(data);
+      setRuns(data.items);
+      setTotal(data.total);
+      setIsDemo(isDemoMeta(data.meta));
     } catch {
       setError("Failed to load reconciliation runs.");
     } finally {
@@ -45,5 +49,5 @@ export function useReconciliations(options: UseReconciliationsOptions = {}) {
     return () => clearInterval(id);
   }, [pollWhenRunning, loading, runs, pollIntervalMs, fetchRuns]);
 
-  return { runs, loading, error, refetch: fetchRuns };
+  return { runs, total, isDemo, loading, error, refetch: fetchRuns };
 }

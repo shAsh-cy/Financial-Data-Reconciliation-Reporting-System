@@ -36,6 +36,7 @@ async def test_viewer_can_access_reporting(
     assert response.status_code == 200
     payload = response.json()
     assert "items" in payload and "total" in payload
+    assert "meta" in payload and isinstance(payload["meta"], dict)
     assert isinstance(payload["items"], list)
 
 

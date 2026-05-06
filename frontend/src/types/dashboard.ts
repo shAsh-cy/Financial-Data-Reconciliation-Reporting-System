@@ -20,3 +20,14 @@ export type ReconciliationStatusSummary = {
   running: number;
   pending: number;
 };
+
+export type CashflowPoint = {
+  periodEnd: string;
+  periodLabel: string;
+  cashflow: number;
+};
+
+export type MatchSlice = {
+  name: string;
+  value: number;
+};

@@ -70,10 +70,12 @@ app/
 `GET /api/v1/reporting/reports` and `GET /api/v1/reporting/reconciliations` (and aliases `GET /api/v1/reports`, `GET /api/v1/reconciliations`) return:
 
 ```json
-{ "items": [], "total": 0, "is_demo": false }
+{ "items": [], "total": 0, "meta": {} }
 ```
 
-When the database has **no rows** and `REPORTING_DEMO_FALLBACK=true` (default in `.env.example`), responses include deterministic demo `items` and `is_demo: true`. Set `REPORTING_DEMO_FALLBACK=false` in production if you prefer strict empty results.
+When the database has **no rows** and `REPORTING_DEMO_FALLBACK=true` (default in `.env.example`), responses include deterministic demo `items` and `meta: { "is_demo": true }`. Detail endpoints resolve the same demo IDs. Set `REPORTING_DEMO_FALLBACK=false` in production if you prefer strict empty results.
+
+See [docs/DEVELOPER_WALKTHROUGH.md](docs/DEVELOPER_WALKTHROUGH.md) for run instructions and service boundaries.
 
 ## Creating a login user (no self-signup)
 

@@ -1,32 +1,31 @@
 import { getApiClient } from "../../../api/client";
 import type {
-  ReconciliationItemRead,
+  ReconciliationItemListResponse,
+  ReconciliationRunDetailEnvelope,
   ReconciliationRunListResponse,
-  ReconciliationRunRead,
 } from "../../../types/reporting";
 
 export const reconciliationApi = {
-  async listRuns(limit = 50, offset = 0): Promise<ReconciliationRunRead[]> {
+  async listRuns(limit = 50, offset = 0): Promise<ReconciliationRunListResponse> {
     const res = await getApiClient().get<ReconciliationRunListResponse>(
-      "/api/v1/reporting/reconciliations",
+      "/api/v1/reconciliations",
       { params: { limit, offset } },
-    );
-    return res.data.items;
-  },
-
-  async getRun(runId: string): Promise<ReconciliationRunRead> {
-    const res = await getApiClient().get<ReconciliationRunRead>(
-      `/api/v1/reporting/reconciliations/${runId}`,
     );
     return res.data;
   },
 
-  async listItems(runId: string, limit = 100, offset = 0): Promise<ReconciliationItemRead[]> {
-    const res = await getApiClient().get<ReconciliationItemRead[]>(
-      `/api/v1/reporting/reconciliations/${runId}/items`,
+  async getRun(runId: string): Promise<ReconciliationRunDetailEnvelope> {
+    const res = await getApiClient().get<ReconciliationRunDetailEnvelope>(
+      `/api/v1/reconciliations/${runId}`,
+    );
+    return res.data;
+  },
+
+  async listItems(runId: string, limit = 100, offset = 0): Promise<ReconciliationItemListResponse> {
+    const res = await getApiClient().get<ReconciliationItemListResponse>(
+      `/api/v1/reconciliations/${runId}/items`,
       { params: { limit, offset } },
     );
     return res.data;
   },
 };
-

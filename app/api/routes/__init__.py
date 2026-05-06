@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.routes.auth import router as auth_router
-from app.api.routes.reporting import router as reporting_router, top_level_list_router
+from app.api.routes.reporting import router as reporting_router, top_level_reporting_router
 from app.api.routes.transactions import router as transactions_router
 
 api_router = APIRouter()
@@ -18,4 +18,4 @@ def health_check() -> dict[str, str]:
 api_router.include_router(auth_router)
 api_router.include_router(transactions_router)
 api_router.include_router(reporting_router)
-api_router.include_router(top_level_list_router)
+api_router.include_router(top_level_reporting_router)
