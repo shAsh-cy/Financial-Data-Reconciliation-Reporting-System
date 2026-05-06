@@ -16,7 +16,7 @@ export function AppLayout() {
   const handleSidebarToggle = () => setSidebarOpen((o) => !o);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", width: "100%", minHeight: "100vh", overflowX: "hidden" }}>
       <Sidebar
         width={DRAWER_WIDTH}
         variant={isMobile ? "temporary" : "permanent"}
@@ -27,10 +27,10 @@ export function AppLayout() {
         component="main"
         sx={{
           flexGrow: 1,
+          width: "100%",
           display: "flex",
           flexDirection: "column",
           minWidth: 0,
-          ...(isMobile ? {} : { ml: `${DRAWER_WIDTH}px` }),
         }}
       >
         <TopBar onMenuClick={handleSidebarToggle} showMenuButton={isMobile} />
