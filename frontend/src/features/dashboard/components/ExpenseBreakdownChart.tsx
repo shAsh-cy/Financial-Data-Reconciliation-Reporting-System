@@ -25,6 +25,15 @@ function formatCompact(value: number): string {
   return value.toFixed(0);
 }
 
+function formatCurrencyDetailed(value: number): string {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartProps) {
   return (
     <Card sx={{ height: "100%", transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
@@ -45,7 +54,7 @@ export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartPr
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(v: number) => formatCompact(v)} />
+              <Tooltip formatter={(v: number, name: string) => [formatCurrencyDetailed(v), name]} />
               <Bar dataKey="value" fill="#1976d2" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

@@ -52,7 +52,7 @@ export function ReconciliationStatusBarChart({
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-              <Tooltip />
+              <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), name]} />
               <Legend />
               <Bar dataKey="succeeded" name="Succeeded" fill="#2e7d32" stackId="a" />
               <Bar dataKey="failed" name="Failed" fill="#c62828" stackId="a" />

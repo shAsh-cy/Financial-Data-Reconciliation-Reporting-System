@@ -23,6 +23,15 @@ function formatCurrency(value: number): string {
   return value.toFixed(0);
 }
 
+function formatCurrencyDetailed(value: number): string {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr);
@@ -49,7 +58,7 @@ export function VarianceChart({ data, loading, error }: VarianceChartProps) {
         <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} />
         <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} />
         <Tooltip
-          formatter={(value: number) => formatCurrency(value)}
+          formatter={(value: number, name: string) => [formatCurrencyDetailed(value), name]}
           labelFormatter={(_, payload) =>
             payload?.[0]?.payload?.periodEnd
               ? formatDate(payload[0].payload.periodEnd)
