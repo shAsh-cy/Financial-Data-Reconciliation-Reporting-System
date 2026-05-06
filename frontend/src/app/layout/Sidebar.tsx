@@ -5,6 +5,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -70,6 +71,24 @@ export function Sidebar({
         Financial Dashboard
       </Typography>
       <List sx={{ px: 1 }}>
+        <ListSubheader
+          component="div"
+          disableSticky
+          sx={{
+            bgcolor: "transparent",
+            fontSize: 11,
+            lineHeight: "20px",
+            textTransform: "uppercase",
+            letterSpacing: 0.6,
+            color: "text.secondary",
+            opacity: isCollapsed ? 0 : 1,
+            transition: "opacity 200ms ease",
+            px: 1.5,
+            mb: 0.5,
+          }}
+        >
+          Core
+        </ListSubheader>
         {navItems.map(({ to, label, icon }) => {
           const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
           const navNode = (
@@ -79,6 +98,14 @@ export function Sidebar({
               to={to}
               onClick={variant === "temporary" ? onClose : undefined}
               selected={isActive}
+              aria-label={label}
+              onMouseDown={() => {
+                try {
+                  localStorage.setItem("last-active-nav", to);
+                } catch {
+                  // no-op for restricted storage contexts
+                }
+              }}
               sx={{
                 borderRadius: 1,
                 mb: 0.5,
@@ -119,12 +146,39 @@ export function Sidebar({
             </Tooltip>
           );
         })}
+        <ListSubheader
+          component="div"
+          disableSticky
+          sx={{
+            bgcolor: "transparent",
+            fontSize: 11,
+            lineHeight: "20px",
+            textTransform: "uppercase",
+            letterSpacing: 0.6,
+            color: "text.secondary",
+            opacity: isCollapsed ? 0 : 1,
+            transition: "opacity 200ms ease",
+            px: 1.5,
+            mt: 0.5,
+            mb: 0.5,
+          }}
+        >
+          Operations
+        </ListSubheader>
         {canIngest && (
           <Tooltip title={isCollapsed ? "Ingest Transactions" : ""} placement="right">
             <ListItemButton
               component={NavLink}
               to="/transactions/ingest"
               onClick={variant === "temporary" ? onClose : undefined}
+              aria-label="Ingest Transactions"
+              onMouseDown={() => {
+                try {
+                  localStorage.setItem("last-active-nav", "/transactions/ingest");
+                } catch {
+                  // no-op for restricted storage contexts
+                }
+              }}
               selected={location.pathname === "/transactions/ingest"}
               sx={{
                 borderRadius: 1,
