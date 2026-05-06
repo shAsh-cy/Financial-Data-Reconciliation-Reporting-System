@@ -5,7 +5,8 @@ import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
-const DRAWER_WIDTH = 260;
+const DRAWER_EXPANDED_WIDTH = 240;
+const DRAWER_COLLAPSED_WIDTH = 72;
 
 export function AppLayout() {
   const theme = useTheme();
@@ -18,7 +19,8 @@ export function AppLayout() {
   return (
     <Box sx={{ display: "flex", width: "100%", minHeight: "100vh", overflowX: "hidden" }}>
       <Sidebar
-        width={DRAWER_WIDTH}
+        expandedWidth={DRAWER_EXPANDED_WIDTH}
+        collapsedWidth={DRAWER_COLLAPSED_WIDTH}
         variant={isMobile ? "temporary" : "permanent"}
         open={isMobile ? sidebarOpen : true}
         onClose={handleSidebarClose}

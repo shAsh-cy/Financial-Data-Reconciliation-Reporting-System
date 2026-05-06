@@ -1,9 +1,11 @@
 import {
+  Box,
   Drawer,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -12,12 +14,14 @@ import {
   Assessment as ReportsIcon,
   Upload as IngestIcon,
 } from "@mui/icons-material";
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAuth } from "../state/useAuth";
 
 type SidebarProps = {
-  width: number;
+  expandedWidth: number;
+  collapsedWidth: number;
   variant: "permanent" | "temporary";
   open: boolean;
   onClose: () => void;
@@ -29,21 +33,38 @@ const navItems = [
   { to: "/reports", label: "Reports", icon: <ReportsIcon /> },
 ];
 
-export function Sidebar({ width, variant, open, onClose }: SidebarProps) {
+export function Sidebar({
+  expandedWidth,
+  collapsedWidth,
+  variant,
+  open,
+  onClose,
+}: SidebarProps) {
   const { user } = useAuth();
   const location = useLocation();
+  const [hovered, setHovered] = useState(false);
 
   const canIngest = user?.role === "admin" || user?.role === "accountant";
+  const isCollapsed = variant === "permanent" && !hovered;
+  const drawerWidth = variant === "permanent" ? (isCollapsed ? collapsedWidth : expandedWidth) : expandedWidth;
 
   const drawerContent = (
-    <>
+    <Box
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      sx={{ height: "100%", overflowX: "hidden" }}
+    >
       <Typography
         variant="h6"
         sx={{
-          px: 2,
+          px: 2.5,
           py: 2,
           fontWeight: 700,
           letterSpacing: 0.2,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          opacity: isCollapsed ? 0 : 1,
+          transition: "opacity 200ms ease",
         }}
       >
         Financial Dashboard
@@ -51,7 +72,7 @@ export function Sidebar({ width, variant, open, onClose }: SidebarProps) {
       <List sx={{ px: 1 }}>
         {navItems.map(({ to, label, icon }) => {
           const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
-          return (
+          const navNode = (
             <ListItemButton
               key={to}
               component={NavLink}
@@ -61,6 +82,10 @@ export function Sidebar({ width, variant, open, onClose }: SidebarProps) {
               sx={{
                 borderRadius: 1,
                 mb: 0.5,
+                minHeight: 44,
+                px: isCollapsed ? 1.25 : 1.5,
+                justifyContent: isCollapsed ? "center" : "flex-start",
+                transition: "all 200ms ease",
                 "&.Mui-selected": {
                   bgcolor: "primary.main",
                   color: "primary.contrastText",
@@ -70,40 +95,73 @@ export function Sidebar({ width, variant, open, onClose }: SidebarProps) {
             >
               <ListItemIcon
                 sx={{
-                  minWidth: 36,
+                  minWidth: isCollapsed ? 0 : 36,
+                  mr: isCollapsed ? 0 : 1,
                   color: "inherit",
                 }}
               >
                 {icon}
               </ListItemIcon>
-              <ListItemText primary={label} />
+              <ListItemText
+                primary={label}
+                sx={{
+                  opacity: isCollapsed ? 0 : 1,
+                  transition: "opacity 200ms ease",
+                  "& .MuiTypography-root": { whiteSpace: "nowrap" },
+                }}
+              />
             </ListItemButton>
+          );
+
+          return (
+            <Tooltip key={to} title={isCollapsed ? label : ""} placement="right">
+              {navNode}
+            </Tooltip>
           );
         })}
         {canIngest && (
-          <ListItemButton
-            component={NavLink}
-            to="/transactions/ingest"
-            onClick={variant === "temporary" ? onClose : undefined}
-            selected={location.pathname === "/transactions/ingest"}
-            sx={{
-              borderRadius: 1,
-              mb: 0.5,
-              "&.Mui-selected": {
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                "&:hover": { bgcolor: "primary.dark" },
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>
-              <IngestIcon />
-            </ListItemIcon>
-            <ListItemText primary="Ingest Transactions" />
-          </ListItemButton>
+          <Tooltip title={isCollapsed ? "Ingest Transactions" : ""} placement="right">
+            <ListItemButton
+              component={NavLink}
+              to="/transactions/ingest"
+              onClick={variant === "temporary" ? onClose : undefined}
+              selected={location.pathname === "/transactions/ingest"}
+              sx={{
+                borderRadius: 1,
+                mb: 0.5,
+                minHeight: 44,
+                px: isCollapsed ? 1.25 : 1.5,
+                justifyContent: isCollapsed ? "center" : "flex-start",
+                transition: "all 200ms ease",
+                "&.Mui-selected": {
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  "&:hover": { bgcolor: "primary.dark" },
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: isCollapsed ? 0 : 36,
+                  mr: isCollapsed ? 0 : 1,
+                  color: "inherit",
+                }}
+              >
+                <IngestIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary="Ingest Transactions"
+                sx={{
+                  opacity: isCollapsed ? 0 : 1,
+                  transition: "opacity 200ms ease",
+                  "& .MuiTypography-root": { whiteSpace: "nowrap" },
+                }}
+              />
+            </ListItemButton>
+          </Tooltip>
         )}
       </List>
-    </>
+    </Box>
   );
 
   return (
@@ -112,14 +170,15 @@ export function Sidebar({ width, variant, open, onClose }: SidebarProps) {
       open={open}
       onClose={onClose}
       sx={{
-        width: variant === "permanent" ? width : undefined,
+        width: variant === "permanent" ? drawerWidth : undefined,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          width,
+          width: drawerWidth,
           boxSizing: "border-box",
           borderRight: "1px solid",
           borderColor: "divider",
-          mt: variant === "permanent" ? 0 : 0,
+          overflowX: "hidden",
+          transition: "width 220ms ease",
         },
       }}
     >
