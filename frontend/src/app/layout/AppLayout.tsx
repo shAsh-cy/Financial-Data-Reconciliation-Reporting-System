@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 
+import { LayoutContent } from "./LayoutContent";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
@@ -36,9 +37,9 @@ export function AppLayout() {
         }}
       >
         <TopBar onMenuClick={handleSidebarToggle} showMenuButton={isMobile} />
-        <Box sx={{ flex: 1, overflow: "auto" }}>
+        <LayoutContent>
           <Outlet />
-        </Box>
+        </LayoutContent>
       </Box>
     </Box>
   );
