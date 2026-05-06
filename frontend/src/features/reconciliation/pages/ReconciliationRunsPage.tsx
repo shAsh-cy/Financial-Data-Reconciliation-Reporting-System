@@ -13,7 +13,7 @@ import {
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import type { ReconciliationRunRead } from "../../../types/reporting";
@@ -61,28 +61,25 @@ export function ReconciliationRunsPage() {
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const data = await reconciliationApi.listRuns(100, 0);
-        if (!cancelled) {
-          setRuns(data.items);
-          setTotal(data.total);
-          setIsDemo(isDemoMeta(data.meta));
-          setLastSync(new Date());
-        }
-      } catch {
-        if (!cancelled) setError("Failed to load reconciliation runs.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const loadRuns = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await reconciliationApi.listRuns(100, 0);
+      setRuns(data.items);
+      setTotal(data.total);
+      setIsDemo(isDemoMeta(data.meta));
+      setLastSync(new Date());
+    } catch {
+      setError("Failed to load reconciliation runs.");
+    } finally {
+      setLoading(false);
     }
-    load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    void loadRuns();
+  }, [loadRuns]);
 
   const rows = useMemo(
     () =>
@@ -173,7 +170,15 @@ export function ReconciliationRunsPage() {
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => void loadRuns()} disabled={loading}>
+              Retry
+            </Button>
+          }
+        >
           {error}
         </Alert>
       )}
@@ -214,6 +219,9 @@ export function ReconciliationRunsPage() {
         <Link component={RouterLink} to="/" underline="hover">
           Back to dashboard
         </Link>
+        <Button size="small" sx={{ ml: 1 }} onClick={() => void loadRuns()} disabled={loading}>
+          Refresh
+        </Button>
       </Typography>
     </Box>
   );

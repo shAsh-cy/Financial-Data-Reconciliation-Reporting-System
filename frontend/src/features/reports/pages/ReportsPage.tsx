@@ -15,7 +15,7 @@ import {
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { KPICard } from "../../dashboard/components/KPICard";
@@ -96,28 +96,23 @@ export function ReportsPage() {
     else sessionStorage.removeItem("reports-list-to");
   }, [to]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const data = await reportsApi.getOverview();
-        if (!cancelled) {
-          setOverview(data);
-          setLastSync(new Date());
-        }
-      } catch {
-        if (!cancelled) {
-          setError("Unable to load reports. Check your connection and try again.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const loadOverview = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await reportsApi.getOverview();
+      setOverview(data);
+      setLastSync(new Date());
+    } catch {
+      setError("Unable to load reports. Check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-    load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    void loadOverview();
+  }, [loadOverview]);
 
   const variance = toVarianceSeries(overview);
   const summary = overview?.summary;
@@ -234,12 +229,7 @@ export function ReportsPage() {
         <Button
           variant="text"
           size="small"
-          onClick={() => {
-            void reportsApi.getOverview().then((data) => {
-              setOverview(data);
-              setLastSync(new Date());
-            });
-          }}
+          onClick={() => void loadOverview()}
           disabled={loading}
         >
           Refresh data
@@ -247,7 +237,15 @@ export function ReportsPage() {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => void loadOverview()} disabled={loading}>
+              Retry
+            </Button>
+          }
+        >
           {error}
         </Alert>
       )}
