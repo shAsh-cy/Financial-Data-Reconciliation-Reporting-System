@@ -37,13 +37,39 @@ export const financialTheme = createTheme({
     h5: { fontWeight: 600 },
     h6: { fontWeight: 600 },
     subtitle1: { fontWeight: 500 },
+    body1: { lineHeight: 1.5 },
+    body2: { lineHeight: 1.45 },
   },
-  shape: { borderRadius: 8 },
+  shape: { borderRadius: 10 },
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          borderRadius: 10,
+          transition: "box-shadow 180ms ease, transform 180ms ease",
+          "&:hover": {
+            boxShadow: "0 6px 16px rgba(15, 23, 42, 0.12)",
+          },
+        },
+      },
+    },
+    MuiCardContent: {
+      styleOverrides: {
+        root: {
+          padding: "20px",
+          "&:last-child": { paddingBottom: "20px" },
+        },
+      },
+    },
+    MuiButton: {
+      defaultProps: {
+        disableElevation: true,
+      },
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          borderRadius: 8,
         },
       },
     },
