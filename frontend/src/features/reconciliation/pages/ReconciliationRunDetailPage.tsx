@@ -272,6 +272,8 @@ export function ReconciliationRunDetailPage() {
         headerName: "Amount",
         width: 130,
         type: "number",
+        align: "right",
+        headerAlign: "right",
         valueFormatter: (v) => (v != null && Number(v) !== 0 ? formatCurrencyDetailed(Number(v)) : "—"),
       },
       {

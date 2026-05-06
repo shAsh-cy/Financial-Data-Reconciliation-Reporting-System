@@ -1,4 +1,5 @@
 import { createTheme } from "@mui/material/styles";
+import type {} from "@mui/x-data-grid/themeAugmentation";
 
 export const financialTheme = createTheme({
   palette: {
@@ -70,6 +71,24 @@ export const financialTheme = createTheme({
         root: {
           textTransform: "none",
           borderRadius: 8,
+        },
+      },
+    },
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+        },
+        columnHeaders: {
+          position: "sticky",
+          top: 0,
+          zIndex: 2,
+          backgroundColor: "#ffffff",
+        },
+        row: {
+          "&:hover": {
+            backgroundColor: "rgba(25, 118, 210, 0.05)",
+          },
         },
       },
     },

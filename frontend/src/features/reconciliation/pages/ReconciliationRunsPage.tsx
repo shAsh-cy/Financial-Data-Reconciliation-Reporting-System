@@ -120,8 +120,22 @@ export function ReconciliationRunsPage() {
           />
         ),
       },
-      { field: "matched_count", headerName: "Matched", width: 110, type: "number" },
-      { field: "unmatched_count", headerName: "Unmatched", width: 120, type: "number" },
+      {
+        field: "matched_count",
+        headerName: "Matched",
+        width: 110,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+      },
+      {
+        field: "unmatched_count",
+        headerName: "Unmatched",
+        width: 120,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+      },
       {
         field: "open",
         headerName: "",
