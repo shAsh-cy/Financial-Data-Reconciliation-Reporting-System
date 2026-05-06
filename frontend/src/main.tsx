@@ -17,11 +17,9 @@ configureApiClient({
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ThemeProvider theme={financialTheme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
-  </React.StrictMode>,
+  <ThemeProvider theme={financialTheme}>
+    <CssBaseline />
+    <App />
+  </ThemeProvider>,
 );
 
