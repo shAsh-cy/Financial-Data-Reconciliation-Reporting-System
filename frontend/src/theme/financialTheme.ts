@@ -1,56 +1,38 @@
-import { createTheme } from "@mui/material/styles";
+/**
+ * Financial dashboard MUI themes — dark and light variants built from
+ * shared design tokens and component overrides.
+ */
+
+import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import type {} from "@mui/x-data-grid/themeAugmentation";
 
-export const financialTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#1976d2",
-      light: "#42a5f5",
-      dark: "#1565c0",
-    },
-    secondary: {
-      main: "#455a64",
-      light: "#78909c",
-      dark: "#37474f",
-    },
-    background: {
-      default: "#f8fafc",
-      paper: "#ffffff",
-    },
-    text: {
-      primary: "#1e293b",
-      secondary: "#64748b",
-    },
-    success: {
-      main: "#2e7d32",
-    },
-    error: {
-      main: "#c62828",
-    },
-    warning: {
-      main: "#ed6c02",
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Segoe UI", Roboto, sans-serif',
-    h4: { fontWeight: 600 },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600 },
-    subtitle1: { fontWeight: 500 },
-    body1: { lineHeight: 1.5 },
-    body2: { lineHeight: 1.45 },
-  },
-  shape: { borderRadius: 10 },
-  components: {
+import {
+  BORDER_RADIUS,
+  DARK_COLORS,
+  DURATIONS,
+  EASINGS,
+  LIGHT_COLORS,
+  SHADOWS,
+  type ThemeMode,
+} from "./tokens";
+
+function buildComponentOverrides(
+  mode: ThemeMode,
+): NonNullable<ThemeOptions["components"]> {
+  const tokens = mode === "dark" ? DARK_COLORS : LIGHT_COLORS;
+  const headerBg = tokens.panel;
+  const rowHover =
+    mode === "dark" ? "rgba(0, 212, 255, 0.06)" : "rgba(26, 86, 219, 0.05)";
+
+  return {
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          borderRadius: 10,
-          transition: "box-shadow 180ms ease, transform 180ms ease",
+          boxShadow: SHADOWS.sm,
+          borderRadius: BORDER_RADIUS.md,
+          transition: `box-shadow ${DURATIONS.normal}ms ${EASINGS.easeOut}, transform ${DURATIONS.normal}ms ${EASINGS.easeOut}`,
           "&:hover": {
-            boxShadow: "0 6px 16px rgba(15, 23, 42, 0.12)",
+            boxShadow: SHADOWS.lg,
           },
         },
       },
@@ -70,27 +52,94 @@ export const financialTheme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          borderRadius: 8,
+          borderRadius: BORDER_RADIUS.sm,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 500,
+          borderRadius: BORDER_RADIUS.sm,
         },
       },
     },
     MuiDataGrid: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
+          borderRadius: BORDER_RADIUS.md,
+          border: `1px solid ${tokens.border}`,
         },
         columnHeaders: {
           position: "sticky",
           top: 0,
           zIndex: 2,
-          backgroundColor: "#ffffff",
+          backgroundColor: headerBg,
         },
         row: {
           "&:hover": {
-            backgroundColor: "rgba(25, 118, 210, 0.05)",
+            backgroundColor: rowHover,
           },
         },
       },
     },
-  },
-});
+  };
+}
+
+function createFinancialTheme(mode: ThemeMode) {
+  const tokens = mode === "dark" ? DARK_COLORS : LIGHT_COLORS;
+
+  return createTheme({
+    palette: {
+      mode,
+      primary: {
+        main: tokens.accent,
+        light: mode === "dark" ? "#33DDFF" : "#3B71F5",
+        dark: mode === "dark" ? "#00A8CC" : "#1241A8",
+      },
+      secondary: {
+        main: tokens.accentSecondary,
+        light: mode === "dark" ? "#33FFAA" : "#10B981",
+        dark: mode === "dark" ? "#00CC77" : "#047857",
+      },
+      background: {
+        default: tokens.background,
+        paper: tokens.panel,
+      },
+      text: {
+        primary: tokens.textPrimary,
+        secondary: tokens.textSecondary,
+      },
+      success: {
+        main: tokens.success,
+      },
+      error: {
+        main: tokens.error,
+      },
+      warning: {
+        main: tokens.warning,
+      },
+      info: {
+        main: tokens.info,
+      },
+      divider: tokens.border,
+    },
+    typography: {
+      fontFamily: '"Inter", "Segoe UI", Roboto, sans-serif',
+      h4: { fontWeight: 600 },
+      h5: { fontWeight: 600 },
+      h6: { fontWeight: 600 },
+      subtitle1: { fontWeight: 500 },
+      body1: { lineHeight: 1.5 },
+      body2: { lineHeight: 1.45 },
+    },
+    shape: { borderRadius: BORDER_RADIUS.md },
+    components: buildComponentOverrides(mode),
+  });
+}
+
+export const darkTheme = createFinancialTheme("dark");
+export const lightTheme = createFinancialTheme("light");
+
+/** @deprecated Use `lightTheme` or theme store — kept for existing imports. */
+export const financialTheme = lightTheme;
