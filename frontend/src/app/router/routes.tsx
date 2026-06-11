@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { RoleRoute } from "./RoleRoute";
 import { LoginPage } from "../../features/auth/pages/LoginPage";
 import { DashboardPage } from "../../features/dashboard/pages/DashboardPage";
+import { OperationsPage } from "../../features/operations/pages/OperationsPage";
 import { ReconciliationRunDetailPage } from "../../features/reconciliation/pages/ReconciliationRunDetailPage";
 import { ReconciliationRunsPage } from "../../features/reconciliation/pages/ReconciliationRunsPage";
 import { ReportDetailPage } from "../../features/reports/pages/ReportDetailPage";
@@ -25,14 +26,37 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { path: "/", element: <DashboardPage /> },
-          { path: "/reconciliations", element: <ReconciliationRunsPage /> },
-          { path: "/reconciliations/:runId", element: <ReconciliationRunDetailPage /> },
-          { path: "/reports", element: <ReportsPage /> },
-          { path: "/reports/:reportId", element: <ReportDetailPage /> },
+          { path: "/", element: <DashboardPage />, handle: { breadcrumb: "Dashboard" } },
+          {
+            path: "/reconciliations",
+            element: <ReconciliationRunsPage />,
+            handle: { breadcrumb: "Reconciliations" },
+          },
+          {
+            path: "/reconciliations/:runId",
+            element: <ReconciliationRunDetailPage />,
+            handle: { breadcrumb: "Run Detail" },
+          },
+          { path: "/reports", element: <ReportsPage />, handle: { breadcrumb: "Reports" } },
+          {
+            path: "/reports/:reportId",
+            element: <ReportDetailPage />,
+            handle: { breadcrumb: "Report Detail" },
+          },
           {
             element: <RoleRoute allow={["admin", "accountant"]} />,
-            children: [{ path: "/transactions/ingest", element: <TransactionIngestPage /> }],
+            children: [
+              {
+                path: "/operations",
+                element: <OperationsPage />,
+                handle: { breadcrumb: "Operations" },
+              },
+              {
+                path: "/transactions/ingest",
+                element: <TransactionIngestPage />,
+                handle: { breadcrumb: "Transactions" },
+              },
+            ],
           },
           { path: "/unauthorized", element: <UnauthorizedPage /> },
           { path: "*", element: <NotFoundPage /> },
@@ -41,6 +65,5 @@ export const router = createBrowserRouter([
     ],
   },
   { path: "/login", element: <LoginPage /> },
-  { path: "*", element: <NotFoundPage /> }
+  { path: "*", element: <NotFoundPage /> },
 ]);
-

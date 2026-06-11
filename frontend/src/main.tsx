@@ -1,11 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import { App } from "./app/App";
 import { configureApiClient } from "./api/client";
 import { authStore } from "./app/state/authStore";
-import { financialTheme } from "./theme/financialTheme";
+import { AppThemeProvider } from "./theme";
 import "./styles/global.css";
 
 configureApiClient({
@@ -17,9 +16,7 @@ configureApiClient({
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <ThemeProvider theme={financialTheme}>
-    <CssBaseline />
+  <AppThemeProvider>
     <App />
-  </ThemeProvider>,
+  </AppThemeProvider>,
 );
-

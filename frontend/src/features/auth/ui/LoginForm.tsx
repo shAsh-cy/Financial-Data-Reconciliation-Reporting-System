@@ -1,13 +1,23 @@
+/**
+ * LoginForm — MUI sign-in form with auth API integration (logic unchanged from legacy).
+ */
+
 import { useState } from "react";
 import type React from "react";
 import { isAxiosError, type AxiosError } from "axios";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  TextField,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import { authApi } from "../api/authApi";
 import { useAuth } from "../../../app/state/useAuth";
-import { Button } from "../../../components/ui/Button";
-import { Input } from "../../../components/ui/Input";
-
-import styles from "./LoginForm.module.css";
 
 function messageFromAxiosError(err: AxiosError): string | null {
   const data = err.response?.data;
@@ -36,6 +46,7 @@ export function LoginForm() {
   const { setAccessToken, setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,31 +91,56 @@ export function LoginForm() {
   }
 
   return (
-    <form className={styles.form} onSubmit={onSubmit}>
-      <div className={styles.row}>
-        <div className={styles.label}>Email</div>
-        <Input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="username"
-          placeholder="name@company.com"
-        />
-      </div>
-      <div className={styles.row}>
-        <div className={styles.label}>Password</div>
-        <Input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-          autoComplete="current-password"
-          placeholder="••••••••"
-        />
-      </div>
-      {error && <div className={styles.error}>{error}</div>}
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Signing in..." : "Sign in"}
+    <Box component="form" onSubmit={onSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <TextField
+        label="Email"
+        type="email"
+        variant="outlined"
+        fullWidth
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoComplete="username"
+        placeholder="name@company.com"
+        disabled={isSubmitting}
+      />
+      <TextField
+        label="Password"
+        type={showPassword ? "text" : "password"}
+        variant="outlined"
+        fullWidth
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete="current-password"
+        placeholder="••••••••"
+        disabled={isSubmitting}
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((v) => !v)}
+                  edge="end"
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
+      {error && <Alert severity="error">{error}</Alert>}
+      <Button type="submit" variant="contained" fullWidth size="large" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CircularProgress size={18} color="inherit" />
+            Signing in…
+          </Box>
+        ) : (
+          "Sign in"
+        )}
       </Button>
-    </form>
+    </Box>
   );
 }
-
