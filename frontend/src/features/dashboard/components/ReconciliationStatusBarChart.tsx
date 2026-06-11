@@ -1,16 +1,23 @@
-import { Card, CardContent, Typography } from "@mui/material";
+/**
+ * ReconciliationStatusBarChart — horizontal status distribution bar chart.
+ */
+
+import { CardContent, Typography, useTheme } from "@mui/material";
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-import type { ReconciliationStatusSummary } from "../../../types/dashboard";
+import { ChartTooltip, CHART_ANIMATION, statusBarColor } from "@/components/charts";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import type { ReconciliationStatusSummary } from "@/types/dashboard";
 
 type ReconciliationStatusBarChartProps = {
   summary: ReconciliationStatusSummary;
@@ -23,18 +30,22 @@ export function ReconciliationStatusBarChart({
   loading,
   error,
 }: ReconciliationStatusBarChartProps) {
+  const theme = useTheme();
+  const gridColor = theme.palette.divider;
+
   const chartData = [
-    {
-      label: "Runs",
-      succeeded: summary.succeeded,
-      failed: summary.failed,
-      running: summary.running,
-      pending: summary.pending,
-    },
-  ];
+    { name: "Succeeded", value: summary.succeeded, status: "succeeded" },
+    { name: "Failed", value: summary.failed, status: "failed" },
+    { name: "Running", value: summary.running, status: "running" },
+    { name: "Pending", value: summary.pending, status: "pending" },
+  ].filter((d) => d.value > 0);
+
+  if (loading) {
+    return <SkeletonCard height={340} />;
+  }
 
   return (
-    <Card sx={{ height: "100%", transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+    <GlassCard animateEntrance={false} sx={{ height: "100%" }}>
       <CardContent>
         <Typography variant="subtitle1" fontWeight={600} gutterBottom>
           Reconciliation distribution
@@ -42,26 +53,48 @@ export function ReconciliationStatusBarChart({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Runs by outcome across the loaded window
         </Typography>
-        {loading ? (
-          <Typography color="text.secondary">Loading…</Typography>
-        ) : error ? (
+        {error ? (
           <Typography color="error">{error}</Typography>
+        ) : chartData.length === 0 ? (
+          <Typography color="text.secondary">No runs in scope.</Typography>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), name]} />
-              <Legend />
-              <Bar dataKey="succeeded" name="Succeeded" fill="#2e7d32" stackId="a" />
-              <Bar dataKey="failed" name="Failed" fill="#c62828" stackId="a" />
-              <Bar dataKey="running" name="Running" fill="#1976d2" stackId="a" />
-              <Bar dataKey="pending" name="Pending" fill="#9e9e9e" stackId="a" />
+            <BarChart
+              layout="vertical"
+              data={chartData}
+              margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} horizontal={false} />
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={88}
+                tick={{ fontSize: 12 }}
+                stroke={theme.palette.text.secondary}
+              />
+              <Tooltip
+                content={
+                  <ChartTooltip valueFormatter={(v, name) => v.toLocaleString()} />
+                }
+              />
+              <Bar
+                dataKey="value"
+                radius={[0, 4, 4, 0]}
+                animationDuration={CHART_ANIMATION.duration}
+                animationEasing={CHART_ANIMATION.easing}
+              >
+                {chartData.map((entry) => (
+                  <Cell
+                    key={entry.status}
+                    fill={statusBarColor(theme, entry.status)}
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
       </CardContent>
-    </Card>
+    </GlassCard>
   );
 }

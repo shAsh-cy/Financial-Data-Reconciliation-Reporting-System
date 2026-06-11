@@ -1,25 +1,23 @@
+/**
+ * ReconciliationRunDetailPage — run detail with KPIs, charts, and match lines DataTable.
+ */
+
 import {
   Alert,
   Box,
-  Breadcrumbs,
   Button,
-  Card,
   CardContent,
-  Chip,
   Grid,
-  Link,
-  Skeleton,
   Typography,
 } from "@mui/material";
 import {
-  DataGrid,
   GridToolbarContainer,
   GridToolbarExport,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -36,16 +34,23 @@ import {
   YAxis,
 } from "recharts";
 
-import { apiErrorDetail } from "../../../api/errors";
+import { apiErrorDetail } from "@/api/errors";
+import { CHART_ANIMATION, ChartTooltip } from "@/components/charts";
+import { DataTable } from "@/components/ui/DataTable";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { KPICard } from "@/components/ui/KPICard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { StatusChip } from "@/components/ui/StatusChip";
 import type {
   ReconciliationItemRead,
   ReconciliationRunDetailEnvelope,
   ReconciliationItemsAggregation,
-} from "../../../types/reporting";
-import { isDemoMeta } from "../../../types/reporting";
-import { formatCurrencyDetailed, parseDecimal } from "../../../utils/financialFormat";
-import { isValidUuid } from "../../../utils/uuid";
-import { KPICard } from "../../dashboard/components/KPICard";
+} from "@/types/reporting";
+import { isDemoMeta } from "@/types/reporting";
+import { parseDecimal } from "@/utils/financialFormat";
+import { isValidUuid } from "@/utils/uuid";
+
 import { reconciliationApi } from "../api/reconciliationApi";
 
 function formatTs(iso: string | null): string {
@@ -54,36 +59,6 @@ function formatTs(iso: string | null): string {
     return new Date(iso).toLocaleString();
   } catch {
     return iso;
-  }
-}
-
-function statusChipColor(
-  status: string,
-): "default" | "success" | "error" | "info" | "warning" {
-  switch (status) {
-    case "succeeded":
-      return "success";
-    case "failed":
-      return "error";
-    case "running":
-      return "info";
-    default:
-      return "warning";
-  }
-}
-
-function matchChipColor(
-  matchType: string,
-): "default" | "success" | "warning" | "info" {
-  switch (matchType) {
-    case "matched":
-      return "success";
-    case "only_left":
-      return "warning";
-    case "only_right":
-      return "info";
-    default:
-      return "default";
   }
 }
 
@@ -110,11 +85,6 @@ function ItemsToolbar() {
     </GridToolbarContainer>
   );
 }
-
-const PIE_COLORS: Record<string, string> = {
-  Matched: "#2e7d32",
-  Unmatched: "#c62828",
-};
 
 export function ReconciliationRunDetailPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -158,11 +128,6 @@ export function ReconciliationRunDetailPage() {
       setLastUpdated(new Date());
     } catch (e: unknown) {
       const { status, message } = apiErrorDetail(e, "Failed to load reconciliation.");
-      if (import.meta.env.DEV && status === 404) {
-        console.warn(
-          "[reconciliations] GET detail 404 — check API and VITE_API_BASE_URL (origin only).",
-        );
-      }
       if (status === 404) {
         setNotFound(true);
         setDetail(null);
@@ -233,38 +198,14 @@ export function ReconciliationRunDetailPage() {
         field: "match_status",
         headerName: "Status",
         width: 130,
-        type: "singleSelect",
-        valueOptions: [
-          { value: "matched", label: "Matched" },
-          { value: "unmatched", label: "Unmatched" },
-        ],
-        renderCell: (params) => (
-          <Chip
-            label={params.value === "matched" ? "Matched" : "Unmatched"}
-            size="small"
-            color={params.value === "matched" ? "success" : "warning"}
-            variant="outlined"
-          />
-        ),
+        renderCell: (params) => <StatusChip status={String(params.value)} />,
       },
       {
         field: "match_type",
         headerName: "Match type",
         width: 140,
-        type: "singleSelect",
-        valueOptions: [
-          { value: "matched", label: "matched" },
-          { value: "only_left", label: "only_left" },
-          { value: "only_right", label: "only_right" },
-        ],
         renderCell: (params) => (
-          <Chip
-            label={String(params.value).replaceAll("_", " ")}
-            size="small"
-            color={matchChipColor(String(params.value))}
-            variant="outlined"
-            sx={{ textTransform: "capitalize" }}
-          />
+          <StatusChip status={String(params.value).replaceAll("_", " ")} />
         ),
       },
       {
@@ -274,21 +215,24 @@ export function ReconciliationRunDetailPage() {
         type: "number",
         align: "right",
         headerAlign: "right",
-        valueFormatter: (v) => (v != null && Number(v) !== 0 ? formatCurrencyDetailed(Number(v)) : "—"),
+        valueFormatter: (v) =>
+          v != null && Number(v) !== 0
+            ? new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(Number(v))
+            : "—",
       },
       {
         field: "left_transaction_id",
         headerName: "Left txn",
         flex: 1,
         minWidth: 120,
-        valueFormatter: (v) => (v ? String(v).slice(0, 8) + "…" : "—"),
+        valueFormatter: (v) => (v ? `${String(v).slice(0, 8)}…` : "—"),
       },
       {
         field: "right_transaction_id",
         headerName: "Right txn",
         flex: 1,
         minWidth: 120,
-        valueFormatter: (v) => (v ? String(v).slice(0, 8) + "…" : "—"),
+        valueFormatter: (v) => (v ? `${String(v).slice(0, 8)}…` : "—"),
       },
     ],
     [],
@@ -297,45 +241,38 @@ export function ReconciliationRunDetailPage() {
   if (!runId) return null;
 
   if (badId) {
+    return <Alert severity="warning">The reconciliation link is not a valid UUID.</Alert>;
+  }
+
+  if (loading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="warning">The reconciliation link is not a valid UUID.</Alert>
+      <Box>
+        <SkeletonCard height={80} />
+        <Grid container spacing={3} sx={{ mt: 1, mb: 3 }}>
+          {[1, 2, 3].map((k) => (
+            <Grid item xs={12} sm={4} key={k}>
+              <SkeletonCard height={140} />
+            </Grid>
+          ))}
+        </Grid>
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} md={4}>
+            <SkeletonCard height={280} />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <SkeletonCard height={280} />
+          </Grid>
+          <Grid item xs={12}>
+            <SkeletonCard height={300} />
+          </Grid>
+        </Grid>
+        <SkeletonCard height={480} />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Breadcrumbs sx={{ mb: 2 }}>
-        <Link
-          component={RouterLink}
-          to="/reconciliations"
-          underline="hover"
-          color="inherit"
-          variant="body2"
-        >
-          Reconciliation runs
-        </Link>
-        <Typography color="text.primary" variant="body2">
-          Run detail
-        </Typography>
-      </Breadcrumbs>
-
-      {loading && (
-        <Box>
-          <Skeleton variant="text" width="50%" height={36} sx={{ mb: 2 }} animation="wave" />
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            {[1, 2, 3].map((k) => (
-              <Grid item xs={12} sm={4} key={k}>
-                <Skeleton variant="rectangular" height={96} sx={{ borderRadius: 1 }} animation="wave" />
-              </Grid>
-            ))}
-          </Grid>
-          <Skeleton variant="rectangular" height={260} sx={{ borderRadius: 1, mb: 2 }} animation="wave" />
-          <Skeleton variant="rectangular" height={400} animation="wave" sx={{ borderRadius: 1 }} />
-        </Box>
-      )}
-
+    <Box>
       {!loading && notFound && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           This reconciliation run was not found. It may have been removed, or the link may be invalid.
@@ -369,58 +306,48 @@ export function ReconciliationRunDetailPage() {
               <Typography variant="subtitle2" gutterBottom>
                 Quick insights
               </Typography>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
+              <Box component="ul" sx={{ m: 0, pl: 2.25 }}>
                 {detail.data.summary.quick_insights.map((t) => (
                   <li key={t}>
                     <Typography variant="body2">{t}</Typography>
                   </li>
                 ))}
-              </ul>
+              </Box>
             </Alert>
           )}
 
-          <Box
-            sx={{
-              mb: 3,
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "flex-start",
-              gap: 2,
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Typography variant="h4" fontWeight={600} gutterBottom>
-                Reconciliation run
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Created {formatTs(run.created_at)}
-                {run.started_at ? ` · Started ${formatTs(run.started_at)}` : ""}
-              </Typography>
-              {lastUpdated && (
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                  Last updated {lastUpdated.toLocaleString()}
-                </Typography>
-              )}
-            </Box>
-            <Chip label={run.status} color={statusChipColor(run.status)} variant="outlined" />
-          </Box>
+          <PageHeader
+            title="Reconciliation run"
+            subtitle={`Created ${formatTs(run.created_at)}${
+              run.started_at ? ` · Started ${formatTs(run.started_at)}` : ""
+            }${lastUpdated ? ` · Updated ${lastUpdated.toLocaleString()}` : ""}`}
+            actions={
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <StatusChip status={run.status} />
+                <Button variant="outlined" size="small" onClick={() => void load()} disabled={loading}>
+                  Refresh
+                </Button>
+              </Box>
+            }
+          />
 
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={4}>
-              <KPICard title="Matched lines" value={detail.data.summary.matched_lines} />
+              <KPICard label="Matched lines" value={detail.data.summary.matched_lines} decimals={0} />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <KPICard title="Unmatched lines" value={detail.data.summary.unmatched_lines} />
+              <KPICard label="Unmatched lines" value={detail.data.summary.unmatched_lines} decimals={0} />
             </Grid>
             <Grid item xs={12} sm={4}>
               <KPICard
-                title="Mismatch rate"
+                label="Mismatch rate"
                 value={
                   detail.data.summary.mismatch_rate_pct != null
-                    ? `${parseDecimal(detail.data.summary.mismatch_rate_pct).toFixed(1)}%`
-                    : "—"
+                    ? parseDecimal(detail.data.summary.mismatch_rate_pct)
+                    : 0
                 }
+                suffix="%"
+                decimals={1}
               />
             </Grid>
           </Grid>
@@ -434,13 +361,13 @@ export function ReconciliationRunDetailPage() {
           {lineAgg && (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Line rollup (items): {lineAgg.matched_lines} matched · {lineAgg.unmatched_lines} unmatched
-              {" "}({lineAgg.only_left} left-only · {lineAgg.only_right} right-only) · {itemsTotal} movements
+              ({lineAgg.only_left} left-only · {lineAgg.only_right} right-only) · {itemsTotal} movements
             </Typography>
           )}
 
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={4}>
-              <Card sx={{ height: "100%", transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+              <GlassCard animateEntrance={false} sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                     Matched vs unmatched
@@ -457,22 +384,27 @@ export function ReconciliationRunDetailPage() {
                           innerRadius={44}
                           outerRadius={72}
                           paddingAngle={2}
-                          isAnimationActive={matchPieData.length < 20}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
                         >
                           {matchPieData.map((entry) => (
-                            <Cell key={entry.name} fill={PIE_COLORS[entry.name] ?? "#1976d2"} stroke="none" />
+                            <Cell
+                              key={entry.name}
+                              fill={entry.name === "Matched" ? "#059669" : "#DC2626"}
+                              stroke="none"
+                            />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: number) => v.toLocaleString()} />
+                        <Tooltip content={<ChartTooltip valueFormatter={(v) => v.toLocaleString()} />} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
                 </CardContent>
-              </Card>
+              </GlassCard>
             </Grid>
             <Grid item xs={12} md={8}>
-              <Card sx={{ height: "100%", transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+              <GlassCard animateEntrance={false} sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                     Mismatch distribution by type
@@ -482,19 +414,25 @@ export function ReconciliationRunDetailPage() {
                   ) : (
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                         <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Bar
+                          dataKey="count"
+                          fill="#1A56DB"
+                          radius={[4, 4, 0, 0]}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
                 </CardContent>
-              </Card>
+              </GlassCard>
             </Grid>
             <Grid item xs={12}>
-              <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+              <GlassCard animateEntrance={false}>
                 <CardContent>
                   <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                     Reconciliation runs over time
@@ -504,38 +442,40 @@ export function ReconciliationRunDetailPage() {
                   ) : (
                     <ResponsiveContainer width="100%" height={260}>
                       <LineChart data={timelineData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                         <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                        <Tooltip />
+                        <Tooltip content={<ChartTooltip />} />
                         <Legend />
                         <Line
                           type="monotone"
                           dataKey="matched"
                           name="Matched"
-                          stroke="#2e7d32"
+                          stroke="#059669"
                           strokeWidth={2}
                           dot={{ r: 3 }}
-                          isAnimationActive={timelineData.length < 30}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
                         />
                         <Line
                           type="monotone"
                           dataKey="unmatched"
                           name="Unmatched"
-                          stroke="#c62828"
+                          stroke="#DC2626"
                           strokeWidth={2}
                           dot={{ r: 3 }}
-                          isAnimationActive={timelineData.length < 30}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
                         />
                       </LineChart>
                     </ResponsiveContainer>
                   )}
                 </CardContent>
-              </Card>
+              </GlassCard>
             </Grid>
           </Grid>
 
-          <Card sx={{ mb: 2, transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 2 } }}>
+          <GlassCard animateEntrance={false} sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom>
                 Match lines
@@ -546,11 +486,9 @@ export function ReconciliationRunDetailPage() {
                 </Alert>
               ) : (
                 <Box sx={{ height: 480, width: "100%" }}>
-                  <DataGrid
+                  <DataTable
                     rows={itemRows}
                     columns={itemColumns}
-                    density="compact"
-                    disableRowSelectionOnClick
                     pageSizeOptions={[25, 50, 100]}
                     initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
                     slots={{ toolbar: ItemsToolbar }}
@@ -564,11 +502,7 @@ export function ReconciliationRunDetailPage() {
                 </Box>
               )}
             </CardContent>
-          </Card>
-
-          <Button variant="outlined" size="small" onClick={() => void load()} disabled={loading}>
-            Refresh
-          </Button>
+          </GlassCard>
         </>
       )}
     </Box>

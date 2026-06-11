@@ -1,12 +1,21 @@
-import { Grid } from "@mui/material";
+/**
+ * DashboardChartsSection — stagger-animated chart grid for the dashboard.
+ */
 
-import type { ExpenseSlice } from "./ExpenseBreakdownChart";
+import { Grid } from "@mui/material";
+import { motion } from "framer-motion";
+
+import { staggerContainer, staggerItem } from "@/lib/animations";
+import type { CashflowPoint, MatchSlice, ReconciliationStatusSummary, VarianceDataPoint } from "@/types/dashboard";
+
 import { CashflowAreaChart } from "./CashflowAreaChart";
+import type { ExpenseSlice } from "./ExpenseBreakdownChart";
 import { ExpenseBreakdownChart } from "./ExpenseBreakdownChart";
 import { MatchRatioPieChart } from "./MatchRatioPieChart";
 import { ReconciliationStatusBarChart } from "./ReconciliationStatusBarChart";
-import type { CashflowPoint, MatchSlice, ReconciliationStatusSummary, VarianceDataPoint } from "../../../types/dashboard";
 import { VarianceChartCard } from "./VarianceChartCard";
+
+const MotionGrid = motion.create(Grid);
 
 export type DashboardChartsSectionProps = {
   varianceData: VarianceDataPoint[];
@@ -32,30 +41,36 @@ export function DashboardChartsSection({
   runsError,
 }: DashboardChartsSectionProps) {
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
+    <MotionGrid
+      container
+      spacing={3}
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+    >
+      <MotionGrid item xs={12} variants={staggerItem}>
         <VarianceChartCard
           data={varianceData}
           loading={reportsLoading}
           error={reportsError}
         />
-      </Grid>
-      <Grid item xs={12} md={6}>
+      </MotionGrid>
+      <MotionGrid item xs={12} md={6} variants={staggerItem}>
         <CashflowAreaChart data={cashflowPoints} loading={reportsLoading} />
-      </Grid>
-      <Grid item xs={12} md={6}>
+      </MotionGrid>
+      <MotionGrid item xs={12} md={6} variants={staggerItem}>
         <ExpenseBreakdownChart data={expenseSlices} loading={reportsLoading} />
-      </Grid>
-      <Grid item xs={12} md={6}>
+      </MotionGrid>
+      <MotionGrid item xs={12} md={6} variants={staggerItem}>
         <MatchRatioPieChart data={matchSlices} loading={runsLoading} />
-      </Grid>
-      <Grid item xs={12} md={6}>
+      </MotionGrid>
+      <MotionGrid item xs={12} md={6} variants={staggerItem}>
         <ReconciliationStatusBarChart
           summary={reconciliationSummary}
           loading={runsLoading}
           error={runsError}
         />
-      </Grid>
-    </Grid>
+      </MotionGrid>
+    </MotionGrid>
   );
 }

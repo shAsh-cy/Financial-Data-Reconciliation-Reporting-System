@@ -1,26 +1,38 @@
+/**
+ * DashboardPage — financial overview with glass KPIs, animated charts, and demo banner.
+ */
+
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   Alert,
   Box,
   Button,
+  CardContent,
   Grid,
-  Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
-import { useAuth } from "../../../app/state/useAuth";
-import { useReports } from "../../../hooks/useReports";
-import { useReconciliations } from "../../../hooks/useReconciliations";
-import { useDashboardMetrics } from "../../../hooks/useDashboardMetrics";
-import type { FinancialReportRead } from "../../../types/reporting";
-import { formatCurrency, formatRatio, trendFromSeries } from "../../../utils/financialFormat";
-import { KPICard } from "../components/KPICard";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { KPICard } from "@/components/ui/KPICard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { useAuth } from "@/app/state/useAuth";
+import { useReports } from "@/hooks/useReports";
+import { useReconciliations } from "@/hooks/useReconciliations";
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
+import type { FinancialReportRead } from "@/types/reporting";
+import { trendFromSeries } from "@/utils/financialFormat";
+import { trendToDeltaType } from "@/utils/kpiHelpers";
+
 import type { ExpenseSlice } from "../components/ExpenseBreakdownChart";
 
 const DashboardChartsSection = lazy(() =>
   import("../components/DashboardChartsSection").then((m) => ({ default: m.DashboardChartsSection })),
 );
+
+const DEMO_BANNER_KEY = "demo-banner-dismissed";
 
 function deriveExpenseSlices(reports: FinancialReportRead[]): ExpenseSlice[] {
   const pnl = reports
@@ -74,6 +86,9 @@ export function DashboardPage() {
   const [from, setFrom] = useState(() => sessionStorage.getItem("dash-period-from") ?? "");
   const [to, setTo] = useState(() => sessionStorage.getItem("dash-period-to") ?? "");
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [demoDismissed, setDemoDismissed] = useState(
+    () => sessionStorage.getItem(DEMO_BANNER_KEY) === "1",
+  );
 
   useEffect(() => {
     if (from) sessionStorage.setItem("dash-period-from", from);
@@ -103,7 +118,8 @@ export function DashboardPage() {
   const expenseSlices = useMemo(() => deriveExpenseSlices(filteredReports), [filteredReports]);
 
   const loading = reportsLoading || runsLoading;
-  const hasError = reportsError || runsError;
+  const hasError = Boolean(reportsError || runsError);
+  const showDemo = (reportsDemo || runsDemo) && !hasError && !demoDismissed;
 
   const revTrend = useMemo(() => {
     if (varianceData.length < 2) return null;
@@ -126,10 +142,7 @@ export function DashboardPage() {
     return trendFromSeries(a.netIncome, b.netIncome);
   }, [varianceData]);
 
-  function invertTrend(t: "up" | "down" | "flat"): "up" | "down" | "flat" {
-    if (t === "flat") return "flat";
-    return t === "up" ? "down" : "up";
-  }
+  const revenueSparkline = useMemo(() => varianceData.map((d) => d.revenue), [varianceData]);
 
   useEffect(() => {
     if (!loading && lastSync == null) setLastSync(new Date());
@@ -141,63 +154,65 @@ export function DashboardPage() {
     );
   };
 
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" fontWeight={600} gutterBottom>
-        Financial Overview
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        {user?.role === "admin"
-          ? "Full access to financial metrics and reconciliation status."
-          : user?.role === "accountant"
-            ? "Financial dashboards and reconciliation workflows."
-            : "Read-only dashboard view."}
-      </Typography>
+  const dismissDemo = () => {
+    sessionStorage.setItem(DEMO_BANNER_KEY, "1");
+    setDemoDismissed(true);
+  };
 
-      <Box
-        sx={{
-          mb: 2,
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          alignItems: "center",
-        }}
-      >
-        <TextField
-          label="Period from"
-          type="date"
-          size="small"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-        />
-        <TextField
-          label="Period to"
-          type="date"
-          size="small"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-        />
-        <Button variant="outlined" size="small" onClick={handleRefresh} disabled={loading}>
-          Refresh
-        </Button>
-        {lastSync && (
-          <Typography variant="caption" color="text.secondary">
-            Last updated {lastSync.toLocaleString()}
-          </Typography>
-        )}
-      </Box>
+  const subtitle =
+    user?.role === "admin"
+      ? "Full access to financial metrics and reconciliation status."
+      : user?.role === "accountant"
+        ? "Financial dashboards and reconciliation workflows."
+        : "Read-only dashboard view.";
+
+  const periodControls = (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
+      <TextField
+        label="Period from"
+        type="date"
+        size="small"
+        value={from}
+        onChange={(e) => setFrom(e.target.value)}
+        slotProps={{ inputLabel: { shrink: true } }}
+      />
+      <TextField
+        label="Period to"
+        type="date"
+        size="small"
+        value={to}
+        onChange={(e) => setTo(e.target.value)}
+        slotProps={{ inputLabel: { shrink: true } }}
+      />
+      <Button variant="outlined" size="small" onClick={handleRefresh} disabled={loading}>
+        Refresh
+      </Button>
+      {lastSync && (
+        <Typography variant="caption" color="text.secondary">
+          Last updated {lastSync.toLocaleString()}
+        </Typography>
+      )}
+    </Box>
+  );
+
+  return (
+    <Box>
+      <PageHeader title="Financial Overview" subtitle={subtitle} actions={periodControls} />
+
+      {showDemo && (
+        <Alert
+          severity="info"
+          icon={<InfoOutlinedIcon />}
+          sx={{ mb: 2 }}
+          onClose={dismissDemo}
+        >
+          <strong>Demo Mode</strong> — Showing sample metrics where live data is not available yet.
+        </Alert>
+      )}
 
       {hasError && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {reportsError || runsError}
-        </Alert>
-      )}
-
-      {(reportsDemo || runsDemo) && !hasError && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Showing sample metrics where live data is not available yet.
         </Alert>
       )}
 
@@ -206,66 +221,126 @@ export function DashboardPage() {
           <Typography variant="subtitle2" gutterBottom>
             Quick insights
           </Typography>
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
+          <Box component="ul" sx={{ m: 0, pl: 2.25 }}>
             {insights.map((t) => (
               <li key={t}>
                 <Typography variant="body2">{t}</Typography>
               </li>
             ))}
-          </ul>
+          </Box>
         </Alert>
       )}
 
-      <Grid container spacing={3} sx={{ mb: 1 }}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Total Revenue"
-            value={formatCurrency(metrics.totalRevenue)}
-            loading={loading}
-            error={reportsError}
-            {...(revTrend
-              ? { deltaLabel: revTrend.label, deltaTrend: revTrend.trend }
-              : {})}
-          />
+          {loading ? (
+            <SkeletonCard height={140} />
+          ) : reportsError ? (
+            <GlassCard animateEntrance={false}>
+              <CardContent>
+                <Typography color="error" variant="body2">{reportsError}</Typography>
+              </CardContent>
+            </GlassCard>
+          ) : (
+            <KPICard
+              label="Total Revenue"
+              value={metrics.totalRevenue}
+              prefix="$"
+              decimals={0}
+              sparklineData={revenueSparkline}
+              {...(revTrend
+                ? {
+                    delta: Math.abs(revTrend.deltaPct),
+                    deltaType: trendToDeltaType(revTrend.trend),
+                  }
+                : {})}
+            />
+          )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Total Expenses"
-            value={formatCurrency(metrics.totalExpenses)}
-            loading={loading}
-            error={reportsError}
-            {...(expTrend
-              ? { deltaLabel: expTrend.label, deltaTrend: invertTrend(expTrend.trend) }
-              : {})}
-          />
+          {loading ? (
+            <SkeletonCard height={140} />
+          ) : reportsError ? (
+            <GlassCard animateEntrance={false}>
+              <CardContent>
+                <Typography color="error" variant="body2">{reportsError}</Typography>
+              </CardContent>
+            </GlassCard>
+          ) : (
+            <KPICard
+              label="Total Expenses"
+              value={metrics.totalExpenses}
+              prefix="$"
+              decimals={0}
+              {...(expTrend
+                ? {
+                    delta: Math.abs(expTrend.deltaPct),
+                    deltaType: trendToDeltaType(expTrend.trend, true),
+                  }
+                : {})}
+            />
+          )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Net Profit"
-            value={formatCurrency(metrics.netProfit)}
-            loading={loading}
-            error={reportsError}
-            {...(profitTrend
-              ? { deltaLabel: profitTrend.label, deltaTrend: profitTrend.trend }
-              : {})}
-          />
+          {loading ? (
+            <SkeletonCard height={140} />
+          ) : reportsError ? (
+            <GlassCard animateEntrance={false}>
+              <CardContent>
+                <Typography color="error" variant="body2">{reportsError}</Typography>
+              </CardContent>
+            </GlassCard>
+          ) : (
+            <KPICard
+              label="Net Profit"
+              value={metrics.netProfit}
+              prefix="$"
+              decimals={0}
+              {...(profitTrend
+                ? {
+                    delta: Math.abs(profitTrend.deltaPct),
+                    deltaType: trendToDeltaType(profitTrend.trend),
+                  }
+                : {})}
+            />
+          )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Liquidity Ratio"
-            value={formatRatio(metrics.liquidityRatio)}
-            loading={loading}
-            error={reportsError}
-          />
+          {loading ? (
+            <SkeletonCard height={140} />
+          ) : reportsError ? (
+            <GlassCard animateEntrance={false}>
+              <CardContent>
+                <Typography color="error" variant="body2">{reportsError}</Typography>
+              </CardContent>
+            </GlassCard>
+          ) : metrics.liquidityRatio != null ? (
+            <KPICard
+              label="Liquidity Ratio"
+              value={metrics.liquidityRatio}
+              decimals={2}
+            />
+          ) : (
+            <GlassCard animateEntrance={false}>
+              <CardContent>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Liquidity Ratio
+                </Typography>
+                <Typography variant="h5" fontWeight={600}>
+                  —
+                </Typography>
+              </CardContent>
+            </GlassCard>
+          )}
         </Grid>
       </Grid>
 
       <Suspense
         fallback={
           <Grid container spacing={3}>
-            {[1, 2, 3].map((k) => (
-              <Grid item xs={12} key={k}>
-                <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 1 }} animation="wave" />
+            {[1, 2, 3, 4, 5].map((k) => (
+              <Grid item xs={12} md={k === 1 ? 12 : 6} key={k}>
+                <SkeletonCard height={k === 1 ? 360 : 340} />
               </Grid>
             ))}
           </Grid>

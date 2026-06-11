@@ -1,13 +1,14 @@
+/**
+ * ReconciliationRunsPage — reconciliation runs list with DataTable and status chips.
+ */
+
 import {
   Alert,
   Box,
   Button,
-  Chip,
-  Link,
   Typography,
 } from "@mui/material";
 import {
-  DataGrid,
   GridToolbarContainer,
   GridToolbarExport,
   GridToolbarQuickFilter,
@@ -16,24 +17,15 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
-import type { ReconciliationRunRead } from "../../../types/reporting";
-import { isDemoMeta } from "../../../types/reporting";
-import { reconciliationApi } from "../api/reconciliationApi";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { StatusChip } from "@/components/ui/StatusChip";
+import type { ReconciliationRunRead } from "@/types/reporting";
+import { isDemoMeta } from "@/types/reporting";
 
-function statusChipColor(
-  status: string,
-): "default" | "success" | "error" | "info" | "warning" {
-  switch (status) {
-    case "succeeded":
-      return "success";
-    case "failed":
-      return "error";
-    case "running":
-      return "info";
-    default:
-      return "warning";
-  }
-}
+import { reconciliationApi } from "../api/reconciliationApi";
 
 function formatWhen(iso: string | null): string {
   if (!iso) return "—";
@@ -106,16 +98,7 @@ export function ReconciliationRunsPage() {
         field: "status",
         headerName: "Status",
         width: 140,
-        type: "singleSelect",
-        valueOptions: ["succeeded", "failed", "running", "pending"],
-        renderCell: (params) => (
-          <Chip
-            label={params.value}
-            size="small"
-            color={statusChipColor(String(params.value))}
-            variant="outlined"
-          />
-        ),
+        renderCell: (params) => <StatusChip status={String(params.value)} />,
       },
       {
         field: "matched_count",
@@ -154,20 +137,23 @@ export function ReconciliationRunsPage() {
     [],
   );
 
+  const headerActions = (
+    <Button variant="outlined" size="small" onClick={() => void loadRuns()} disabled={loading}>
+      Refresh
+    </Button>
+  );
+
+  const subtitle = `Ledger matching jobs, match counts, and exceptions.${
+    total > 0 ? ` ${total} total.` : ""
+  }${lastSync ? ` Updated ${lastSync.toLocaleString()}.` : ""}`;
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" fontWeight={600} gutterBottom>
-        Reconciliation runs
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        Ledger matching jobs, match counts, and exceptions.
-        {total > 0 ? ` ${total} total.` : ""}
-        {lastSync && (
-          <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-            Updated {lastSync.toLocaleString()}
-          </Typography>
-        )}
-      </Typography>
+    <Box>
+      <PageHeader
+        title="Reconciliation runs"
+        subtitle={subtitle}
+        actions={headerActions}
+      />
 
       {error && (
         <Alert
@@ -189,38 +175,35 @@ export function ReconciliationRunsPage() {
         </Alert>
       )}
 
-      <Box sx={{ height: 520, width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          density="compact"
-          disableRowSelectionOnClick
-          pageSizeOptions={[10, 25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          slots={{ toolbar: RunsToolbar }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 400 },
-            },
-          }}
+      {loading ? (
+        <SkeletonCard height={520} />
+      ) : !error && runs.length === 0 ? (
+        <EmptyState
+          title="No reconciliation runs yet"
+          subtitle="When jobs complete, they will appear here with sortable columns and CSV export."
         />
-      </Box>
-
-      {!loading && runs.length === 0 && (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          No reconciliation runs yet. When jobs complete, they will appear here with sortable columns
-          and CSV export.
-        </Alert>
+      ) : (
+        <Box sx={{ height: 520, width: "100%" }}>
+          <DataTable
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            pageSizeOptions={[10, 25, 50, 100]}
+            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+            slots={{ toolbar: RunsToolbar }}
+            slotProps={{
+              toolbar: {
+                showQuickFilter: true,
+                quickFilterProps: { debounceMs: 400 },
+              },
+            }}
+          />
+        </Box>
       )}
 
       <Typography variant="body2" sx={{ mt: 2 }}>
-        <Link component={RouterLink} to="/" underline="hover">
+        <Button component={RouterLink} to="/" size="small" variant="text">
           Back to dashboard
-        </Link>
-        <Button size="small" sx={{ ml: 1 }} onClick={() => void loadRuns()} disabled={loading}>
-          Refresh
         </Button>
       </Typography>
     </Box>

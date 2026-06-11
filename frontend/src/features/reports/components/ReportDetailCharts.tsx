@@ -1,4 +1,8 @@
-import { Card, CardContent, Grid, Typography } from "@mui/material";
+/**
+ * ReportDetailCharts — lazy-loaded detail charts wrapped in GlassCard containers.
+ */
+
+import { CardContent, Grid, Typography } from "@mui/material";
 import { memo, useMemo } from "react";
 import {
   Bar,
@@ -14,9 +18,11 @@ import {
   YAxis,
 } from "recharts";
 
-import { CashflowAreaChart } from "../../dashboard/components/CashflowAreaChart";
-import { VarianceChart } from "../../dashboard/components/VarianceChart";
-import type { CashflowPoint, VarianceDataPoint } from "../../../types/dashboard";
+import { CHART_ANIMATION, ChartTooltip } from "@/components/charts";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { CashflowAreaChart } from "@/features/dashboard/components/CashflowAreaChart";
+import { VarianceChart } from "@/features/dashboard/components/VarianceChart";
+import type { CashflowPoint, VarianceDataPoint } from "@/types/dashboard";
 
 export type ReportDetailChartsProps = {
   reportType: string;
@@ -54,7 +60,7 @@ function ReportDetailChartsInner({
     return (
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+          <GlassCard animateEntrance={false}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Liquidity composition
@@ -76,37 +82,44 @@ function ReportDetailChartsInner({
                       innerRadius={48}
                       outerRadius={80}
                       paddingAngle={2}
-                      isAnimationActive={liquiditySlices.length < 24}
+                      animationDuration={CHART_ANIMATION.duration}
+                      animationEasing={CHART_ANIMATION.easing}
                     >
                       {liquiditySlices.map((_, i) => (
                         <Cell key={i} fill={LIQ_COLORS[i % LIQ_COLORS.length]} stroke="none" />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => formatCompact(v)} />
+                    <Tooltip content={<ChartTooltip valueFormatter={(v) => formatCompact(v)} />} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               )}
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+          <GlassCard animateEntrance={false}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Category weights
               </Typography>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={categoryBar} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number) => formatCompact(v)} />
-                  <Bar dataKey="value" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                  <Tooltip content={<ChartTooltip valueFormatter={(v) => formatCompact(v)} />} />
+                  <Bar
+                    dataKey="value"
+                    fill="#1976d2"
+                    radius={[4, 4, 0, 0]}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
       </Grid>
     );
@@ -115,7 +128,7 @@ function ReportDetailChartsInner({
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
-        <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+        <GlassCard animateEntrance={false}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Revenue, expenses, and net income
@@ -129,7 +142,7 @@ function ReportDetailChartsInner({
               <VarianceChart data={lineSeries} />
             )}
           </CardContent>
-        </Card>
+        </GlassCard>
       </Grid>
 
       <Grid item xs={12} md={6}>
@@ -137,7 +150,7 @@ function ReportDetailChartsInner({
       </Grid>
 
       <Grid item xs={12} md={6}>
-        <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+        <GlassCard animateEntrance={false}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Expense & category breakdown
@@ -147,20 +160,26 @@ function ReportDetailChartsInner({
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={categoryBar} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number) => formatCompact(v)} />
-                  <Bar dataKey="value" fill="#ed6c02" radius={[4, 4, 0, 0]} />
+                  <Tooltip content={<ChartTooltip valueFormatter={(v) => formatCompact(v)} />} />
+                  <Bar
+                    dataKey="value"
+                    fill="#ed6c02"
+                    radius={[4, 4, 0, 0]}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
-        </Card>
+        </GlassCard>
       </Grid>
 
       <Grid item xs={12} md={6}>
-        <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+        <GlassCard animateEntrance={false}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Revenue composition
@@ -179,23 +198,24 @@ function ReportDetailChartsInner({
                     innerRadius={52}
                     outerRadius={86}
                     paddingAngle={2}
-                    isAnimationActive={revenueSlices.length < 24}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
                   >
                     {revenueSlices.map((_, i) => (
                       <Cell key={i} fill={REV_COLORS[i % REV_COLORS.length]} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatCompact(v)} />
+                  <Tooltip content={<ChartTooltip valueFormatter={(v) => formatCompact(v)} />} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </CardContent>
-        </Card>
+        </GlassCard>
       </Grid>
 
       <Grid item xs={12} md={6}>
-        <Card sx={{ transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+        <GlassCard animateEntrance={false}>
           <CardContent>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Expense composition
@@ -214,19 +234,20 @@ function ReportDetailChartsInner({
                     innerRadius={52}
                     outerRadius={86}
                     paddingAngle={2}
-                    isAnimationActive={expenseSlices.length < 24}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
                   >
                     {expenseSlices.map((_, i) => (
                       <Cell key={i} fill={EXP_COLORS[i % EXP_COLORS.length]} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatCompact(v)} />
+                  <Tooltip content={<ChartTooltip valueFormatter={(v) => formatCompact(v)} />} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </CardContent>
-        </Card>
+        </GlassCard>
       </Grid>
     </Grid>
   );

@@ -1,4 +1,8 @@
-import { Card, CardContent, Typography } from "@mui/material";
+/**
+ * CashflowAreaChart — net income cashflow proxy with gradient area fill.
+ */
+
+import { CardContent, Typography, useTheme } from "@mui/material";
 import {
   Area,
   AreaChart,
@@ -9,9 +13,12 @@ import {
   YAxis,
 } from "recharts";
 
-import type { CashflowPoint } from "../../../types/dashboard";
+import { ChartTooltip, CHART_ANIMATION } from "@/components/charts";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import type { CashflowPoint } from "@/types/dashboard";
 
-type Props = {
+type CashflowAreaChartProps = {
   data: CashflowPoint[];
   loading?: boolean;
 };
@@ -30,9 +37,17 @@ function formatDate(dateStr: string): string {
   }
 }
 
-export function CashflowAreaChart({ data, loading }: Props) {
+export function CashflowAreaChart({ data, loading }: CashflowAreaChartProps) {
+  const theme = useTheme();
+  const accent = theme.palette.primary.main;
+  const gridColor = theme.palette.divider;
+
+  if (loading) {
+    return <SkeletonCard height={340} />;
+  }
+
   return (
-    <Card sx={{ height: "100%", transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 3 } }}>
+    <GlassCard animateEntrance={false} sx={{ height: "100%" }}>
       <CardContent>
         <Typography variant="subtitle1" fontWeight={600} gutterBottom>
           Cashflow trend
@@ -40,44 +55,45 @@ export function CashflowAreaChart({ data, loading }: Props) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Net income as cashflow proxy by period
         </Typography>
-        {loading ? (
-          <Typography color="text.secondary">Loading…</Typography>
-        ) : data.length === 0 ? (
+        {data.length === 0 ? (
           <Typography color="text.secondary">No series yet.</Typography>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="cfFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1976d2" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#1976d2" stopOpacity={0} />
+                  <stop offset="0%" stopColor={accent} stopOpacity={0.4} />
+                  <stop offset="100%" stopColor={accent} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+              <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
+              <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
               <Tooltip
-                formatter={(v: number) => formatCompact(v)}
-                labelFormatter={(_, payload) =>
-                  payload?.[0]?.payload?.periodEnd
-                    ? formatDate(payload[0].payload.periodEnd)
-                    : ""
+                content={
+                  <ChartTooltip
+                    valueFormatter={(v) => formatCompact(v)}
+                    labelFormatter={(lbl) => lbl}
+                  />
                 }
               />
               <Area
                 type="monotone"
                 dataKey="cashflow"
                 name="Cashflow"
-                stroke="#1976d2"
-                fillOpacity={1}
+                stroke={accent}
                 fill="url(#cfFill)"
                 strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 3 }}
+                animationDuration={CHART_ANIMATION.duration}
+                animationEasing={CHART_ANIMATION.easing}
                 isAnimationActive={data.length < 40}
               />
             </AreaChart>
           </ResponsiveContainer>
         )}
       </CardContent>
-    </Card>
+    </GlassCard>
   );
 }

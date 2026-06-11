@@ -1,58 +1,48 @@
+/**
+ * ReportDetailPage — structured report detail with glass KPIs, statement grid, and charts.
+ */
+
 import {
   Alert,
   Box,
-  Breadcrumbs,
   Button,
-  Card,
   CardContent,
-  Chip,
   Grid,
-  Link,
-  Skeleton,
   Typography,
 } from "@mui/material";
 import {
-  DataGrid,
   GridToolbarContainer,
   GridToolbarExport,
   GridToolbarQuickFilter,
 } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-import { apiErrorDetail } from "../../../api/errors";
-import type { CashflowPoint, VarianceDataPoint } from "../../../types/dashboard";
-import type { FinancialReportDetailEnvelope } from "../../../types/reporting";
-import { isDemoMeta } from "../../../types/reporting";
+import { apiErrorDetail } from "@/api/errors";
+import { DataTable } from "@/components/ui/DataTable";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { KPICard } from "@/components/ui/KPICard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { StatusChip } from "@/components/ui/StatusChip";
+import type { CashflowPoint, VarianceDataPoint } from "@/types/dashboard";
+import type { FinancialReportDetailEnvelope } from "@/types/reporting";
+import { isDemoMeta } from "@/types/reporting";
 import {
   formatCurrencyDetailed,
   formatPercent,
   formatRatio,
   parseDecimal,
   trendFromSeries,
-} from "../../../utils/financialFormat";
-import { isValidUuid } from "../../../utils/uuid";
-import { KPICard } from "../../dashboard/components/KPICard";
+} from "@/utils/financialFormat";
+import { trendToDeltaType } from "@/utils/kpiHelpers";
+import { isValidUuid } from "@/utils/uuid";
+
 import { reportsApi } from "../api/reportsApi";
 import type { ReportDetailChartsProps } from "../components/ReportDetailCharts";
 
 const ReportDetailCharts = lazy(() => import("../components/ReportDetailCharts"));
-
-function statusChipColor(
-  status: string,
-): "default" | "success" | "error" | "info" | "warning" {
-  switch (status) {
-    case "succeeded":
-      return "success";
-    case "failed":
-      return "error";
-    case "running":
-      return "info";
-    default:
-      return "warning";
-  }
-}
 
 function StatementToolbar() {
   return (
@@ -61,11 +51,6 @@ function StatementToolbar() {
       <GridToolbarQuickFilter />
     </GridToolbarContainer>
   );
-}
-
-function invertTrend(t: "up" | "down" | "flat"): "up" | "down" | "flat" {
-  if (t === "flat") return "flat";
-  return t === "up" ? "down" : "up";
 }
 
 export function ReportDetailPage() {
@@ -122,28 +107,21 @@ export function ReportDetailPage() {
   const isPnL = snapshot?.report_type === "pnl";
   const isLiquidity = snapshot?.report_type === "liquidity";
   const detailDemo = detail != null && isDemoMeta(detail.meta);
-
   const ts = detail?.data.timeseries ?? [];
 
   const revTrend = useMemo(() => {
     if (ts.length < 2) return null;
-    const a = parseDecimal(ts[ts.length - 1]?.revenue);
-    const b = parseDecimal(ts[ts.length - 2]?.revenue);
-    return trendFromSeries(a, b);
+    return trendFromSeries(parseDecimal(ts[ts.length - 1]?.revenue), parseDecimal(ts[ts.length - 2]?.revenue));
   }, [ts]);
 
   const expTrend = useMemo(() => {
     if (ts.length < 2) return null;
-    const a = parseDecimal(ts[ts.length - 1]?.expenses);
-    const b = parseDecimal(ts[ts.length - 2]?.expenses);
-    return trendFromSeries(a, b);
+    return trendFromSeries(parseDecimal(ts[ts.length - 1]?.expenses), parseDecimal(ts[ts.length - 2]?.expenses));
   }, [ts]);
 
   const profitTrend = useMemo(() => {
     if (ts.length < 2) return null;
-    const a = parseDecimal(ts[ts.length - 1]?.net_income);
-    const b = parseDecimal(ts[ts.length - 2]?.net_income);
-    return trendFromSeries(a, b);
+    return trendFromSeries(parseDecimal(ts[ts.length - 1]?.net_income), parseDecimal(ts[ts.length - 2]?.net_income));
   }, [ts]);
 
   const chartProps: ReportDetailChartsProps | null = useMemo(() => {
@@ -234,37 +212,31 @@ export function ReportDetailPage() {
 
   if (badId) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="warning">The report link is not a valid UUID.</Alert>
+      <Alert severity="warning">The report link is not a valid UUID.</Alert>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box>
+        <SkeletonCard height={80} />
+        <Grid container spacing={3} sx={{ mt: 1, mb: 3 }}>
+          {[1, 2, 3, 4].map((k) => (
+            <Grid item xs={12} sm={6} md={3} key={k}>
+              <SkeletonCard height={140} />
+            </Grid>
+          ))}
+        </Grid>
+        <SkeletonCard height={380} />
+        <Box sx={{ mt: 3 }}>
+          <SkeletonCard height={320} />
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Breadcrumbs sx={{ mb: 2 }}>
-        <Link component={RouterLink} to="/reports" underline="hover" color="inherit" variant="body2">
-          Reports
-        </Link>
-        <Typography color="text.primary" variant="body2">
-          Detail
-        </Typography>
-      </Breadcrumbs>
-
-      {loading && (
-        <Box>
-          <Skeleton variant="text" width="40%" height={40} sx={{ mb: 2 }} animation="wave" />
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            {[1, 2, 3, 4].map((k) => (
-              <Grid item xs={12} sm={6} md={3} key={k}>
-                <Skeleton variant="rectangular" height={100} animation="wave" sx={{ borderRadius: 1 }} />
-              </Grid>
-            ))}
-          </Grid>
-          <Skeleton variant="rectangular" height={280} animation="wave" sx={{ borderRadius: 1 }} />
-        </Box>
-      )}
-
+    <Box>
       {!loading && notFound && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           This report was not found. It may have been deleted or the link may be invalid.
@@ -287,32 +259,20 @@ export function ReportDetailPage() {
 
       {!loading && snapshot != null && detail != null && chartProps != null && (
         <>
-          <Box
-            sx={{
-              mb: 3,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 2,
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Typography variant="h4" fontWeight={600} gutterBottom sx={{ textTransform: "capitalize" }}>
-                {snapshot.report_type} report
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Period ending {snapshot.period_end}
-                {snapshot.period_start ? ` · From ${snapshot.period_start}` : ""}
-              </Typography>
-              {lastUpdated && (
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                  Last updated {lastUpdated.toLocaleString()}
-                </Typography>
-              )}
-            </Box>
-            <Chip label={snapshot.status} color={statusChipColor(snapshot.status)} variant="outlined" />
-          </Box>
+          <PageHeader
+            title={`${snapshot.report_type} report`}
+            subtitle={`Period ending ${snapshot.period_end}${
+              snapshot.period_start ? ` · From ${snapshot.period_start}` : ""
+            }${lastUpdated ? ` · Updated ${lastUpdated.toLocaleString()}` : ""}`}
+            actions={
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <StatusChip status={snapshot.status} />
+                <Button variant="outlined" size="small" onClick={() => void load()} disabled={loading}>
+                  Refresh
+                </Button>
+              </Box>
+            }
+          />
 
           {detailDemo && (
             <Alert severity="info" sx={{ mb: 2 }}>
@@ -325,13 +285,13 @@ export function ReportDetailPage() {
               <Typography variant="subtitle2" gutterBottom>
                 Quick insights
               </Typography>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
+              <Box component="ul" sx={{ m: 0, pl: 2.25 }}>
                 {detail.data.summary.quick_insights.map((t) => (
                   <li key={t}>
                     <Typography variant="body2">{t}</Typography>
                   </li>
                 ))}
-              </ul>
+              </Box>
             </Alert>
           )}
 
@@ -339,50 +299,64 @@ export function ReportDetailPage() {
             <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6} md={3}>
                 <KPICard
-                  title="Revenue"
-                  value={formatCurrencyDetailed(parseDecimal(snapshot.revenue))}
-                  {...(revTrend ? { deltaLabel: revTrend.label, deltaTrend: revTrend.trend } : {})}
+                  label="Revenue"
+                  value={parseDecimal(snapshot.revenue)}
+                  prefix="$"
+                  decimals={0}
+                  {...(revTrend
+                    ? { delta: Math.abs(revTrend.deltaPct), deltaType: trendToDeltaType(revTrend.trend) }
+                    : {})}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <KPICard
-                  title="Total expenses"
-                  value={formatCurrencyDetailed(parseDecimal(detail.data.summary.total_expenses))}
+                  label="Total expenses"
+                  value={parseDecimal(detail.data.summary.total_expenses)}
+                  prefix="$"
+                  decimals={0}
                   {...(expTrend
-                    ? { deltaLabel: expTrend.label, deltaTrend: invertTrend(expTrend.trend) }
+                    ? { delta: Math.abs(expTrend.deltaPct), deltaType: trendToDeltaType(expTrend.trend, true) }
                     : {})}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <KPICard
-                  title="Net profit"
-                  value={formatCurrencyDetailed(parseDecimal(snapshot.net_income))}
+                  label="Net profit"
+                  value={parseDecimal(snapshot.net_income)}
+                  prefix="$"
+                  decimals={0}
                   {...(profitTrend
-                    ? { deltaLabel: profitTrend.label, deltaTrend: profitTrend.trend }
+                    ? { delta: Math.abs(profitTrend.deltaPct), deltaType: trendToDeltaType(profitTrend.trend) }
                     : {})}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <KPICard
-                  title="Operating income"
-                  value={formatCurrencyDetailed(parseDecimal(snapshot.operating_income))}
+                  label="Operating income"
+                  value={parseDecimal(snapshot.operating_income)}
+                  prefix="$"
+                  decimals={0}
                 />
               </Grid>
             </Grid>
           )}
 
           {isPnL && (
-            <Grid container spacing={3} sx={{ mb: 2 }}>
+            <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
                 <KPICard
-                  title="Gross margin"
-                  value={formatPercent(parseDecimal(detail.data.summary.gross_margin_pct))}
+                  label="Gross margin"
+                  value={parseDecimal(detail.data.summary.gross_margin_pct)}
+                  suffix="%"
+                  decimals={1}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <KPICard
-                  title="Net margin"
-                  value={formatPercent(parseDecimal(detail.data.summary.net_margin_pct))}
+                  label="Net margin"
+                  value={parseDecimal(detail.data.summary.net_margin_pct)}
+                  suffix="%"
+                  decimals={1}
                 />
               </Grid>
             </Grid>
@@ -391,21 +365,23 @@ export function ReportDetailPage() {
           {isLiquidity && (
             <Grid container spacing={3} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={4}>
-                <KPICard title="Current ratio" value={formatRatio(parseDecimal(snapshot.current_ratio))} />
+                <KPICard label="Current ratio" value={parseDecimal(snapshot.current_ratio)} decimals={2} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <KPICard title="Quick ratio" value={formatRatio(parseDecimal(snapshot.quick_ratio))} />
+                <KPICard label="Quick ratio" value={parseDecimal(snapshot.quick_ratio)} decimals={2} />
               </Grid>
               <Grid item xs={12} sm={4}>
                 <KPICard
-                  title="Working capital"
-                  value={formatCurrencyDetailed(parseDecimal(snapshot.working_capital))}
+                  label="Working capital"
+                  value={parseDecimal(snapshot.working_capital)}
+                  prefix="$"
+                  decimals={0}
                 />
               </Grid>
             </Grid>
           )}
 
-          <Card sx={{ mb: 3, transition: "box-shadow 0.2s ease", "&:hover": { boxShadow: 2 } }}>
+          <GlassCard animateEntrance={false} sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" fontWeight={600} gutterBottom>
                 Structured statement
@@ -414,11 +390,9 @@ export function ReportDetailPage() {
                 {isPnL ? "Profit & loss" : isLiquidity ? "Liquidity & ratios" : "Report lines"}
               </Typography>
               <Box sx={{ height: 380, width: "100%" }}>
-                <DataGrid
+                <DataTable
                   rows={statementRows}
                   columns={statementColumns}
-                  density="compact"
-                  disableRowSelectionOnClick
                   pageSizeOptions={[10, 25]}
                   initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
                   slots={{ toolbar: StatementToolbar }}
@@ -431,21 +405,13 @@ export function ReportDetailPage() {
                 />
               </Box>
             </CardContent>
-          </Card>
+          </GlassCard>
 
-          <Suspense
-            fallback={
-              <Skeleton variant="rectangular" height={320} sx={{ borderRadius: 1, mb: 3 }} animation="wave" />
-            }
-          >
+          <Suspense fallback={<SkeletonCard height={320} />}>
             <Box sx={{ mb: 3 }}>
               <ReportDetailCharts {...chartProps} />
             </Box>
           </Suspense>
-
-          <Button variant="outlined" size="small" onClick={() => void load()} disabled={loading}>
-            Refresh
-          </Button>
         </>
       )}
     </Box>

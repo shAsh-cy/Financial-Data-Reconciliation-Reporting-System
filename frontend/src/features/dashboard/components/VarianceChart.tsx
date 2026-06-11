@@ -1,15 +1,22 @@
+/**
+ * VarianceChart — revenue, expenses, and net income line chart.
+ */
+
+import { useTheme } from "@mui/material";
 import {
   CartesianGrid,
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-import type { VarianceDataPoint } from "../../../types/dashboard";
+import { ChartTooltip, CHART_ANIMATION } from "@/components/charts";
+import type { VarianceDataPoint } from "@/types/dashboard";
 
 type VarianceChartProps = {
   data: VarianceDataPoint[];
@@ -34,14 +41,17 @@ function formatCurrencyDetailed(value: number): string {
 
 function formatDate(dateStr: string): string {
   try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+    return new Date(dateStr).toLocaleDateString(undefined, { month: "short", year: "2-digit" });
   } catch {
     return dateStr;
   }
 }
 
 export function VarianceChart({ data, loading, error }: VarianceChartProps) {
+  const theme = useTheme();
+  const accent = theme.palette.primary.main;
+  const gridColor = theme.palette.divider;
+
   if (loading) return null;
   if (error) return null;
   if (data.length === 0) return null;
@@ -54,41 +64,48 @@ export function VarianceChart({ data, loading, error }: VarianceChartProps) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-        <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} />
-        <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+        <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
+        <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
         <Tooltip
-          formatter={(value: number, name: string) => [formatCurrencyDetailed(value), name]}
-          labelFormatter={(_, payload) =>
-            payload?.[0]?.payload?.periodEnd
-              ? formatDate(payload[0].payload.periodEnd)
-              : ""
+          content={
+            <ChartTooltip
+              valueFormatter={(v, name) => formatCurrencyDetailed(v)}
+              labelFormatter={(lbl) => lbl}
+            />
           }
         />
+        <ReferenceLine y={0} stroke={accent} strokeDasharray="4 4" strokeWidth={1.5} />
         <Legend />
         <Line
           type="monotone"
           dataKey="revenue"
           name="Revenue"
-          stroke="#1976d2"
+          stroke={theme.palette.primary.main}
           strokeWidth={2}
           dot={{ r: 4 }}
+          animationDuration={CHART_ANIMATION.duration}
+          animationEasing={CHART_ANIMATION.easing}
         />
         <Line
           type="monotone"
           dataKey="expenses"
           name="Expenses"
-          stroke="#ed6c02"
+          stroke={theme.palette.warning.main}
           strokeWidth={2}
           dot={{ r: 4 }}
+          animationDuration={CHART_ANIMATION.duration}
+          animationEasing={CHART_ANIMATION.easing}
         />
         <Line
           type="monotone"
           dataKey="netIncome"
           name="Net Income"
-          stroke="#2e7d32"
+          stroke={theme.palette.success.main}
           strokeWidth={2}
           dot={{ r: 4 }}
+          animationDuration={CHART_ANIMATION.duration}
+          animationEasing={CHART_ANIMATION.easing}
         />
       </LineChart>
     </ResponsiveContainer>
