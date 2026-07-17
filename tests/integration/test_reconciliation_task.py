@@ -34,8 +34,8 @@ async def test_reconciliation_task_persists_run_and_items(
 
     async with factory() as session:
         # Create two ledgers with matching and unmatched transactions
-        left_ledger = Ledger(code="LEFT-01", name="Left Ledger", source_system="test")
-        right_ledger = Ledger(code="RIGHT-01", name="Right Ledger", source_system="test")
+        left_ledger = Ledger(code="LEFT-01", name="Left Ledger", currency="USD", source_system="test")
+        right_ledger = Ledger(code="RIGHT-01", name="Right Ledger", currency="USD", source_system="test")
         session.add(left_ledger)
         session.add(right_ledger)
         await session.flush()

@@ -3,7 +3,7 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Text
+from sqlalchemy import String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,12 @@ class Ledger(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+    )
+    currency: Mapped[str] = mapped_column(
+        String(3),
+        nullable=False,
+        default="USD",
+        server_default=text("'USD'"),
     )
     description: Mapped[str | None] = mapped_column(
         Text,

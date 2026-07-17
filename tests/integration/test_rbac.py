@@ -88,7 +88,7 @@ async def test_accountant_can_access_transaction_ingest(
     from app.models.ledger import Ledger
     from app.services.auth import create_user_access_token
 
-    ledger = Ledger(code="BANK-01", name="Bank Account", source_system="test")
+    ledger = Ledger(code="BANK-01", name="Bank Account", currency="USD", source_system="test")
     db_session.add(ledger)
     await db_session.flush()
 
