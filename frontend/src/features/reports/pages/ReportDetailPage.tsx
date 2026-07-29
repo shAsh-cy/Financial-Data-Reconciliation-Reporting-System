@@ -28,7 +28,7 @@ import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { StatusChip } from "@/components/ui/StatusChip";
 import type { CashflowPoint, VarianceDataPoint } from "@/types/dashboard";
 import type { FinancialReportDetailEnvelope } from "@/types/reporting";
-import { isDemoMeta } from "@/types/reporting";
+import { activateDemoFromMeta } from "@/app/state/demoStore";
 import {
   formatCurrencyDetailed,
   formatPercent,
@@ -80,6 +80,7 @@ export function ReportDetailPage() {
         return;
       }
       setDetail(detailRes);
+      activateDemoFromMeta(detailRes.meta);
       setLastUpdated(new Date());
     } catch (e: unknown) {
       const { status, message } = apiErrorDetail(e, "Failed to load report.");
@@ -106,7 +107,6 @@ export function ReportDetailPage() {
   const snapshot = detail?.data.summary.snapshot;
   const isPnL = snapshot?.report_type === "pnl";
   const isLiquidity = snapshot?.report_type === "liquidity";
-  const detailDemo = detail != null && isDemoMeta(detail.meta);
   const ts = detail?.data.timeseries ?? [];
 
   const revTrend = useMemo(() => {
@@ -273,12 +273,6 @@ export function ReportDetailPage() {
               </Box>
             }
           />
-
-          {detailDemo && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Demo report — values are synthetic until live jobs populate the database.
-            </Alert>
-          )}
 
           {detail.data.summary.quick_insights.length > 0 && (
             <Alert severity="warning" sx={{ mb: 2 }}>

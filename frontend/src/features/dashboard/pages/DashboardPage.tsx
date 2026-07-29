@@ -2,7 +2,6 @@
  * DashboardPage — financial overview with glass KPIs, animated charts, and demo banner.
  */
 
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   Alert,
   Box,
@@ -31,8 +30,6 @@ import type { ExpenseSlice } from "../components/ExpenseBreakdownChart";
 const DashboardChartsSection = lazy(() =>
   import("../components/DashboardChartsSection").then((m) => ({ default: m.DashboardChartsSection })),
 );
-
-const DEMO_BANNER_KEY = "demo-banner-dismissed";
 
 function deriveExpenseSlices(reports: FinancialReportRead[]): ExpenseSlice[] {
   const pnl = reports
@@ -64,7 +61,6 @@ export function DashboardPage() {
   const { user } = useAuth();
   const {
     reports,
-    isDemo: reportsDemo,
     loading: reportsLoading,
     error: reportsError,
     refetch: refetchReports,
@@ -74,7 +70,6 @@ export function DashboardPage() {
   });
   const {
     runs,
-    isDemo: runsDemo,
     loading: runsLoading,
     error: runsError,
     refetch: refetchRuns,
@@ -86,9 +81,6 @@ export function DashboardPage() {
   const [from, setFrom] = useState(() => sessionStorage.getItem("dash-period-from") ?? "");
   const [to, setTo] = useState(() => sessionStorage.getItem("dash-period-to") ?? "");
   const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [demoDismissed, setDemoDismissed] = useState(
-    () => sessionStorage.getItem(DEMO_BANNER_KEY) === "1",
-  );
 
   useEffect(() => {
     if (from) sessionStorage.setItem("dash-period-from", from);
@@ -119,7 +111,6 @@ export function DashboardPage() {
 
   const loading = reportsLoading || runsLoading;
   const hasError = Boolean(reportsError || runsError);
-  const showDemo = (reportsDemo || runsDemo) && !hasError && !demoDismissed;
 
   const revTrend = useMemo(() => {
     if (varianceData.length < 2) return null;
@@ -152,11 +143,6 @@ export function DashboardPage() {
     void Promise.all([Promise.resolve(refetchReports()), Promise.resolve(refetchRuns())]).then(() =>
       setLastSync(new Date()),
     );
-  };
-
-  const dismissDemo = () => {
-    sessionStorage.setItem(DEMO_BANNER_KEY, "1");
-    setDemoDismissed(true);
   };
 
   const subtitle =
@@ -198,17 +184,6 @@ export function DashboardPage() {
   return (
     <Box>
       <PageHeader title="Financial Overview" subtitle={subtitle} actions={periodControls} />
-
-      {showDemo && (
-        <Alert
-          severity="info"
-          icon={<InfoOutlinedIcon />}
-          sx={{ mb: 2 }}
-          onClose={dismissDemo}
-        >
-          <strong>Demo Mode</strong> — Showing sample metrics where live data is not available yet.
-        </Alert>
-      )}
 
       {hasError && (
         <Alert severity="error" sx={{ mb: 2 }}>

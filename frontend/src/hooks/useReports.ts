@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { activateDemoFromMeta } from "../app/state/demoStore";
 import { type FinancialReportRead, isDemoMeta } from "../types/reporting";
 import { reportsApi } from "../features/reports/api/reportsApi";
 
@@ -31,6 +32,7 @@ export function useReports(options: UseReportsOptions = {}) {
       setReports(data.items);
       setTotal(data.total);
       setIsDemo(isDemoMeta(data.meta));
+      activateDemoFromMeta(data.meta);
     } catch {
       setError("Failed to load reports.");
     } finally {

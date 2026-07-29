@@ -22,8 +22,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { activateDemoFromMeta } from "@/app/state/demoStore";
 import type { ReconciliationRunRead } from "@/types/reporting";
-import { isDemoMeta } from "@/types/reporting";
 
 import { reconciliationApi } from "../api/reconciliationApi";
 
@@ -48,7 +48,6 @@ function RunsToolbar() {
 export function ReconciliationRunsPage() {
   const [runs, setRuns] = useState<ReconciliationRunRead[]>([]);
   const [total, setTotal] = useState(0);
-  const [isDemo, setIsDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -60,7 +59,7 @@ export function ReconciliationRunsPage() {
       const data = await reconciliationApi.listRuns(100, 0);
       setRuns(data.items);
       setTotal(data.total);
-      setIsDemo(isDemoMeta(data.meta));
+      activateDemoFromMeta(data.meta);
       setLastSync(new Date());
     } catch {
       setError("Failed to load reconciliation runs.");
@@ -166,12 +165,6 @@ export function ReconciliationRunsPage() {
           }
         >
           {error}
-        </Alert>
-      )}
-
-      {isDemo && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Demo sample data — ingest transactions and run reconciliation to replace this view.
         </Alert>
       )}
 

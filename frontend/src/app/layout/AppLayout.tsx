@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 
+import { DemoBanner } from "../../components/ui/DemoBanner";
 import { LayoutContent } from "./LayoutContent";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -48,6 +49,7 @@ export function AppLayout() {
           showMenuButton={isMobile}
         />
         <LayoutContent>
+          <DemoBanner />
           <Outlet />
         </LayoutContent>
       </Box>

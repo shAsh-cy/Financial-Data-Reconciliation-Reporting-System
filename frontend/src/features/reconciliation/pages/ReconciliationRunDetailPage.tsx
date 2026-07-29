@@ -47,7 +47,7 @@ import type {
   ReconciliationRunDetailEnvelope,
   ReconciliationItemsAggregation,
 } from "@/types/reporting";
-import { isDemoMeta } from "@/types/reporting";
+import { activateDemoFromMeta } from "@/app/state/demoStore";
 import { parseDecimal } from "@/utils/financialFormat";
 import { isValidUuid } from "@/utils/uuid";
 
@@ -122,6 +122,7 @@ export function ReconciliationRunDetailPage() {
         return;
       }
       setDetail(runRes);
+      activateDemoFromMeta(runRes.meta);
       setItems(itemsRes.items);
       setItemsTotal(itemsRes.total);
       setLineAgg(aggregationFromMeta(itemsRes.meta));
@@ -147,7 +148,6 @@ export function ReconciliationRunDetailPage() {
   }, [load]);
 
   const run = detail?.data.summary.run;
-  const runDemo = detail != null && isDemoMeta(detail.meta);
 
   const matchPieData = useMemo(() => {
     const m = detail?.data.summary.matched_lines ?? 0;
@@ -295,12 +295,6 @@ export function ReconciliationRunDetailPage() {
 
       {!loading && run != null && detail != null && (
         <>
-          {runDemo && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Demo reconciliation — synthetic run and match lines for UI review.
-            </Alert>
-          )}
-
           {detail.data.summary.quick_insights.length > 0 && (
             <Alert severity="warning" sx={{ mb: 2 }}>
               <Typography variant="subtitle2" gutterBottom>

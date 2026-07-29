@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { activateDemoFromMeta } from "../app/state/demoStore";
 import { type ReconciliationRunRead, isDemoMeta } from "../types/reporting";
 import { reconciliationApi } from "../features/reconciliation/api/reconciliationApi";
 
@@ -29,6 +30,7 @@ export function useReconciliations(options: UseReconciliationsOptions = {}) {
       setRuns(data.items);
       setTotal(data.total);
       setIsDemo(isDemoMeta(data.meta));
+      activateDemoFromMeta(data.meta);
     } catch {
       setError("Failed to load reconciliation runs.");
     } finally {

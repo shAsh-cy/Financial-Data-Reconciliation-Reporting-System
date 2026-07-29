@@ -29,8 +29,8 @@ import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { VarianceChart } from "@/features/dashboard/components/VarianceChart";
 import type { VarianceDataPoint } from "@/types/dashboard";
+import { activateDemoFromMeta } from "@/app/state/demoStore";
 import type { FinancialReportRead, ReportsOverviewResponse } from "@/types/reporting";
-import { isDemoMeta } from "@/types/reporting";
 import { parseDecimal } from "@/utils/financialFormat";
 
 import { reportsApi } from "../api/reportsApi";
@@ -96,6 +96,7 @@ export function ReportsPage() {
     try {
       const data = await reportsApi.getOverview();
       setOverview(data);
+      activateDemoFromMeta(data.meta);
       setLastSync(new Date());
     } catch {
       setError("Unable to load reports. Check your connection and try again.");
@@ -215,12 +216,6 @@ export function ReportsPage() {
           }
         >
           {error}
-        </Alert>
-      )}
-
-      {overview != null && isDemoMeta(overview.meta) && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Demo sample data — connect live report jobs to replace this view.
         </Alert>
       )}
 
