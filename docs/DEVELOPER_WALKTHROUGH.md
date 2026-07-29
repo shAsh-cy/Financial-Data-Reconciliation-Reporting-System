@@ -35,15 +35,59 @@ npm run dev
 
 Point the UI at the API with `VITE_API_BASE_URL` (see `frontend/src/utils/env.ts`). The default assumes the API is reachable at the same origin or the value you set for local dev.
 
+### Frontend layout
+
+| Concern | Location |
+|---------|----------|
+| Design tokens, light/dark themes, glass utility | `frontend/src/theme/` |
+| Shared component library (GlassCard, KPICard, DataTable, StatusChip, TaskStatusPoller, DemoBanner, …) | `frontend/src/components/ui/` |
+| Feature pages | `frontend/src/features/<feature>/pages/` |
+| Cross-feature hooks (`useReports`, `useLedgers`, `useJobHistory`) | `frontend/src/hooks/` |
+| Global state (auth, theme, demo mode) | `frontend/src/app/state/` |
+
+Theme mode persists to `localStorage` under `theme-mode` and is toggled from the
+bottom of the sidebar. The `/operations` route is lazy-loaded because it pulls in
+`@mui/x-date-pickers`.
+
+Job history on the Operations page is per-tab, stored in `sessionStorage` under
+`ops-job-history` and capped at the 10 most recent tasks. Non-terminal tasks are
+re-polled every 5s; the inline poller under each form polls every 3s.
+
+## Run the Celery worker
+
+Job triggers return a `task_id` immediately, but nothing progresses past `queued`
+unless a worker is consuming the Redis queue:
+
+```bash
+celery -A app.workers.celery_app worker -l info
+```
+
 ## Trigger reconciliation and reporting flows
 
-- **Transactions**: Users with the **admin** or **accountant** role can POST transaction ingest (see `/api/v1/transactions/ingest` in OpenAPI). That queues background work (Celery) depending on your deployment.
+Every write path is exposed over HTTP and driven from the **Operations** page
+(`/operations`) in the dashboard. Trigger endpoints require the **admin** or
+**accountant** role; status polling is open to all roles.
 
-- **Reconciliation**: After ledgers have transactions, reconciliation jobs typically populate `reconciliation_runs` and `reconciliation_items`. Read APIs expose runs and items under `/api/v1/reconciliations` and `/api/v1/reporting/reconciliations` (aliases).
+| Method | Path | Body | Result |
+|--------|------|------|--------|
+| POST | `/api/v1/transactions/ingest` | `{ ledger_id, transactions[] }` | `{ task_id }` 202 |
+| POST | `/api/v1/jobs/reconciliation` | `{ left_ledger_id, right_ledger_id }` | `{ task_id, status: "queued" }` 202 |
+| POST | `/api/v1/jobs/reports/pnl` | `{ ledger_id, period_start, period_end }` | `{ task_id, status: "queued" }` 202 |
+| POST | `/api/v1/jobs/reports/liquidity` | `{ ledger_id, period_start, period_end }` | `{ task_id, status: "queued" }` 202 |
+| GET | `/api/v1/jobs/{task_id}` | — | `{ task_id, status, result?, error? }` |
 
-- **Reports**: Financial reports are persisted when reporting jobs complete. List and overview endpoints live under `/api/v1/reports` and `/api/v1/reports/overview`.
+`status` maps Celery states onto four values: `queued`, `running`, `success`,
+`failed`. On success, `result` is the id of the record the worker produced — a
+reconciliation run id, a report id, or (for ingest) the number of rows inserted.
 
-Use a valid JWT from `/api/v1/auth/login` (or your auth route) and send `Authorization: Bearer <token>` on reporting requests.
+Ledgers are managed under `/api/v1/ledgers` (list/get for every role; create and
+update are admin-only). The job forms populate their dropdowns from this list.
+
+Reads stay where they were: runs and items under `/api/v1/reconciliations`,
+reports under `/api/v1/reports` and `/api/v1/reports/overview`, each also
+aliased under `/api/v1/reporting/...`.
+
+Use a valid JWT from `/api/v1/auth/login` and send `Authorization: Bearer <token>` on every request above.
 
 ## Synthetic (demo) data
 
@@ -54,6 +98,11 @@ When **`REPORTING_DEMO_FALLBACK=true`** (see `.env.example`):
 - Responses include **`meta: { "is_demo": true }`** when the payload is synthetic.
 
 Set **`REPORTING_DEMO_FALLBACK=false`** in production if you want strict empty results and no synthetic records.
+
+The dashboard surfaces this with a single app-wide banner rendered in
+`AppLayout`. It turns on when `VITE_DEMO_MODE=true`, or as soon as any API
+response carries `meta.is_demo: true` — hooks and pages report that through
+`activateDemoFromMeta` in `frontend/src/app/state/demoStore.ts`.
 
 Demo UUIDs are derived in `app/services/reporting_demo.py` from a fixed namespace so they are stable across restarts.
 
@@ -74,8 +123,14 @@ When demo data is returned, `meta` typically contains `{ "is_demo": true }`. Lis
 Detail reads (`GET .../reconciliations/{id}`, `GET .../reports/{id}`) return:
 
 ```json
-{ "id": "<uuid>", "data": { ... }, "is_demo": false }
+{
+  "id": "<uuid>",
+  "data": { "summary": {}, "timeseries": [], "breakdown": [] },
+  "meta": { "is_demo": false }
+}
 ```
+
+Note that `is_demo` lives inside **`meta`**, not at the top level.
 
 Deterministic demo IDs from `reporting_demo.py` resolve on detail **even when those rows are not stored in Postgres**, so links from overview/list stay consistent with synthetic data.
 
@@ -91,6 +146,9 @@ Reconciliation item lists include `meta.aggregation` (matched vs unmatched line 
 | `app/services/reconciliation_service.py` | Reconciliation **detail** + **items** reads, logging, demo-aware fallbacks. |
 | `app/services/report_service.py` | Financial report **detail** reads, logging, demo-aware fallbacks. |
 | `app/api/routes/reporting.py` | Thin routes: auth deps, call services, map `None` to HTTP 404 where appropriate. |
+| `app/services/job_service.py` | Celery `.delay()` dispatch and `AsyncResult` state mapping for the jobs API. |
+| `app/services/ledger_service.py` | Async ledger CRUD, including slug-derived unique ledger codes. |
+| `app/workers/tasks.py` | The Celery tasks themselves: ingest, reconcile, generate P&L, generate liquidity. |
 
 Business rules for numeric reporting (PnL, liquidity math) live under `app/services/reporting.py` and related modules used by write/async jobs—not in the read routers above.
 
