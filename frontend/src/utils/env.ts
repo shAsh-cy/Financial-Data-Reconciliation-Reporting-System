@@ -22,5 +22,6 @@ function resolveApiBaseUrl(): string {
 
 export const env = {
   apiBaseUrl: resolveApiBaseUrl(),
+  demoMode: import.meta.env.VITE_DEMO_MODE === "true",
 } as const;
 
