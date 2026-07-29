@@ -209,7 +209,7 @@ export function TransactionIngestPage() {
 
           <TaskStatusPoller
             taskId={taskId}
-            onStatusChange={(status) => taskId && syncStatus(taskId, status)}
+            onStatusChange={(status, response) => syncStatus(response.task_id, status)}
             renderResult={(result) =>
               typeof result === "number"
                 ? `Inserted ${result} new transaction${result === 1 ? "" : "s"} (duplicates are skipped).`

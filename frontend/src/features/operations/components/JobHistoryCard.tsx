@@ -39,7 +39,7 @@ export function JobHistoryCard({ entries }: JobHistoryCardProps) {
       entries.map((entry) => ({
         id: entry.task_id,
         task_id: entry.task_id,
-        type: TYPE_LABELS[entry.type] ?? entry.type,
+        type: TYPE_LABELS[entry.type],
         triggered_at: formatWhen(entry.triggered_at),
         status: entry.status,
       })),

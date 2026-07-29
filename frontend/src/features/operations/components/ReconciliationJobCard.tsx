@@ -104,7 +104,7 @@ export function ReconciliationJobCard({
 
         <TaskStatusPoller
           taskId={taskId}
-          onStatusChange={(status) => taskId && onStatusChange(taskId, status)}
+          onStatusChange={(status, response) => onStatusChange(response.task_id, status)}
           renderResult={(result) => (
             <JobResultLink
               result={result}
