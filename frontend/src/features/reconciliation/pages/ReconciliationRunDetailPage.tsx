@@ -10,11 +10,6 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import {
-  GridToolbarContainer,
-  GridToolbarExport,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -51,16 +46,9 @@ import { activateDemoFromMeta } from "@/app/state/demoStore";
 import { parseDecimal } from "@/utils/financialFormat";
 import { isValidUuid } from "@/utils/uuid";
 
-import { reconciliationApi } from "../api/reconciliationApi";
+import { formatDateTime } from "@/utils/dateFormat";
 
-function formatTs(iso: string | null): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
-}
+import { reconciliationApi } from "../api/reconciliationApi";
 
 function aggregationFromMeta(meta: Record<string, unknown> | undefined): ReconciliationItemsAggregation | null {
   const raw = meta?.aggregation;
@@ -75,15 +63,6 @@ function aggregationFromMeta(meta: Record<string, unknown> | undefined): Reconci
     only_left: Number(o.only_left ?? 0),
     only_right: Number(o.only_right ?? 0),
   };
-}
-
-function ItemsToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport csvOptions={{ fileName: "reconciliation-items" }} />
-      <GridToolbarQuickFilter />
-    </GridToolbarContainer>
-  );
 }
 
 export function ReconciliationRunDetailPage() {
@@ -312,8 +291,8 @@ export function ReconciliationRunDetailPage() {
 
           <PageHeader
             title="Reconciliation run"
-            subtitle={`Created ${formatTs(run.created_at)}${
-              run.started_at ? ` · Started ${formatTs(run.started_at)}` : ""
+            subtitle={`Created ${formatDateTime(run.created_at)}${
+              run.started_at ? ` · Started ${formatDateTime(run.started_at)}` : ""
             }${lastUpdated ? ` · Updated ${lastUpdated.toLocaleString()}` : ""}`}
             actions={
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -500,13 +479,7 @@ export function ReconciliationRunDetailPage() {
                     columns={itemColumns}
                     pageSizeOptions={[25, 50, 100]}
                     initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-                    slots={{ toolbar: ItemsToolbar }}
-                    slotProps={{
-                      toolbar: {
-                        showQuickFilter: true,
-                        quickFilterProps: { debounceMs: 400 },
-                      },
-                    }}
+                    exportFileName="reconciliation-items"
                   />
                 </Box>
               )}

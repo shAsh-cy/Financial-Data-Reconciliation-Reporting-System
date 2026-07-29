@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { formatChartDate } from "../utils/dateFormat";
 import { parseDecimal } from "../utils/financialFormat";
 import type {
   CashflowPoint,
@@ -67,18 +68,9 @@ export function deriveCashflowPoints(reports: FinancialReportRead[]): CashflowPo
     .sort((a, b) => (a.period_end > b.period_end ? 1 : -1));
   return pnl.map((r) => {
     const periodEnd = r.period_end;
-    let periodLabel = periodEnd;
-    try {
-      periodLabel = new Date(periodEnd).toLocaleDateString(undefined, {
-        month: "short",
-        year: "2-digit",
-      });
-    } catch {
-      /* ignore */
-    }
     return {
       periodEnd,
-      periodLabel,
+      periodLabel: formatChartDate(periodEnd),
       cashflow: parseDecimal(r.net_income),
     };
   });

@@ -17,25 +17,12 @@ import { ChartFrame, ChartTooltip, CHART_ANIMATION } from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import type { CashflowPoint } from "@/types/dashboard";
+import { formatCompact } from "@/utils/financialFormat";
 
 type CashflowAreaChartProps = {
   data: CashflowPoint[];
   loading?: boolean;
 };
-
-function formatCompact(value: number): string {
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(0);
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, { month: "short", year: "2-digit" });
-  } catch {
-    return dateStr;
-  }
-}
 
 export function CashflowAreaChart({ data, loading }: CashflowAreaChartProps) {
   const theme = useTheme();

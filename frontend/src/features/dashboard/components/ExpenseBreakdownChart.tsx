@@ -18,6 +18,7 @@ import {
 import { ChartFrame, ChartTooltip, CHART_ANIMATION, describeSlices } from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { formatCompact, formatCurrency } from "@/utils/financialFormat";
 
 export type ExpenseSlice = {
   name: string;
@@ -34,21 +35,6 @@ const BAR_GRADIENTS = [
   ["#D97706", "#F59E0B"],
   ["#059669", "#10B981"],
 ];
-
-function formatCompact(value: number): string {
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(0);
-}
-
-function formatCurrencyDetailed(value: number): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartProps) {
   const theme = useTheme();
@@ -72,7 +58,7 @@ export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartPr
         ) : (
           <ChartFrame
             label="Bar chart of the expense mix for the latest profit and loss report"
-            summary={describeSlices(data, formatCurrencyDetailed)}
+            summary={describeSlices(data, formatCurrency)}
           >
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data} margin={{ top: 24, right: 8, left: 0, bottom: 0 }}>
@@ -93,7 +79,7 @@ export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartPr
               <Tooltip
                 content={
                   <ChartTooltip
-                    valueFormatter={(v, name) => formatCurrencyDetailed(v)}
+                    valueFormatter={(v, name) => formatCurrency(v)}
                   />
                 }
               />

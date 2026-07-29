@@ -8,11 +8,6 @@ import {
   Button,
   Typography,
 } from "@mui/material";
-import {
-  GridToolbarContainer,
-  GridToolbarExport,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
@@ -25,25 +20,9 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import { activateDemoFromMeta } from "@/app/state/demoStore";
 import type { ReconciliationRunRead } from "@/types/reporting";
 
+import { formatDateTime } from "@/utils/dateFormat";
+
 import { reconciliationApi } from "../api/reconciliationApi";
-
-function formatWhen(iso: string | null): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
-}
-
-function RunsToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport csvOptions={{ fileName: "reconciliation-runs" }} />
-      <GridToolbarQuickFilter />
-    </GridToolbarContainer>
-  );
-}
 
 export function ReconciliationRunsPage() {
   const [runs, setRuns] = useState<ReconciliationRunRead[]>([]);
@@ -91,7 +70,7 @@ export function ReconciliationRunsPage() {
         headerName: "Started",
         flex: 1,
         minWidth: 180,
-        valueFormatter: (v) => formatWhen(v as string | null),
+        valueFormatter: (v) => formatDateTime(v as string | null),
       },
       {
         field: "status",
@@ -183,13 +162,7 @@ export function ReconciliationRunsPage() {
             loading={loading}
             pageSizeOptions={[10, 25, 50, 100]}
             initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-            slots={{ toolbar: RunsToolbar }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 400 },
-              },
-            }}
+            exportFileName="reconciliation-runs"
           />
         </Box>
       )}

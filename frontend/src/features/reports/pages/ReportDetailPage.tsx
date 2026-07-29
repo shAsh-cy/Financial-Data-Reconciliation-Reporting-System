@@ -10,11 +10,6 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import {
-  GridToolbarContainer,
-  GridToolbarExport,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -29,6 +24,7 @@ import { StatusChip } from "@/components/ui/StatusChip";
 import type { CashflowPoint, VarianceDataPoint } from "@/types/dashboard";
 import type { FinancialReportDetailEnvelope } from "@/types/reporting";
 import { activateDemoFromMeta } from "@/app/state/demoStore";
+import { formatChartDate } from "@/utils/dateFormat";
 import {
   formatCurrencyDetailed,
   formatPercent,
@@ -43,15 +39,6 @@ import { reportsApi } from "../api/reportsApi";
 import type { ReportDetailChartsProps } from "../components/ReportDetailCharts";
 
 const ReportDetailCharts = lazy(() => import("../components/ReportDetailCharts"));
-
-function StatementToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport csvOptions={{ fileName: "report-pl-lines" }} />
-      <GridToolbarQuickFilter />
-    </GridToolbarContainer>
-  );
-}
 
 export function ReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -133,18 +120,9 @@ export function ReportDetailPage() {
       netIncome: parseDecimal(p.net_income),
     }));
     const cashflowSeries: CashflowPoint[] = detail.data.timeseries.map((p) => {
-      let periodLabel = p.period_end;
-      try {
-        periodLabel = new Date(p.period_end).toLocaleDateString(undefined, {
-          month: "short",
-          year: "2-digit",
-        });
-      } catch {
-        /* ignore */
-      }
       return {
         periodEnd: p.period_end,
-        periodLabel,
+        periodLabel: formatChartDate(p.period_end),
         cashflow: parseDecimal(p.cashflow ?? p.net_income),
       };
     });
@@ -389,13 +367,7 @@ export function ReportDetailPage() {
                   columns={statementColumns}
                   pageSizeOptions={[10, 25]}
                   initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-                  slots={{ toolbar: StatementToolbar }}
-                  slotProps={{
-                    toolbar: {
-                      showQuickFilter: true,
-                      quickFilterProps: { debounceMs: 400 },
-                    },
-                  }}
+                  exportFileName="report-pl-lines"
                 />
               </Box>
             </CardContent>

@@ -24,6 +24,13 @@ export function formatCurrencyDetailed(value: number | null | undefined): string
   }).format(value);
 }
 
+/** Compact axis/label form: 1_250_000 → "1.3M", 4_200 → "4.2K", 12 → "12". */
+export function formatCompact(value: number): string {
+  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return value.toFixed(0);
+}
+
 export function formatPercent(value: number | null | undefined, fractionDigits = 1): string {
   if (value == null || !Number.isFinite(value)) return "—";
   return `${value.toFixed(fractionDigits)}%`;

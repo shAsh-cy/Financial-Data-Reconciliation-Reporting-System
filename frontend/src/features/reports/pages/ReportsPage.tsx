@@ -11,11 +11,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  GridToolbarContainer,
-  GridToolbarExport,
-  GridToolbarQuickFilter,
-} from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
@@ -53,15 +48,6 @@ function reportHighlight(r: FinancialReportRead): string {
     return parseDecimal(r.current_ratio).toFixed(2);
   }
   return "—";
-}
-
-function ReportsToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport csvOptions={{ fileName: "reports-recent" }} />
-      <GridToolbarQuickFilter />
-    </GridToolbarContainer>
-  );
 }
 
 function rowInPeriod(periodEnd: string, from: string, to: string): boolean {
@@ -301,13 +287,7 @@ export function ReportsPage() {
             loading={loading}
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-            slots={{ toolbar: ReportsToolbar }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 400 },
-              },
-            }}
+            exportFileName="reports-recent"
           />
         </Box>
       )}

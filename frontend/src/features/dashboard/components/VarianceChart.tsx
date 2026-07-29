@@ -17,35 +17,14 @@ import {
 
 import { ChartFrame, ChartTooltip, CHART_ANIMATION } from "@/components/charts";
 import type { VarianceDataPoint } from "@/types/dashboard";
+import { formatChartDate } from "@/utils/dateFormat";
+import { formatCompact, formatCurrency } from "@/utils/financialFormat";
 
 type VarianceChartProps = {
   data: VarianceDataPoint[];
   loading?: boolean;
   error?: string | null;
 };
-
-function formatCurrency(value: number): string {
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(0);
-}
-
-function formatCurrencyDetailed(value: number): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, { month: "short", year: "2-digit" });
-  } catch {
-    return dateStr;
-  }
-}
 
 export function VarianceChart({ data, loading, error }: VarianceChartProps) {
   const theme = useTheme();
@@ -58,15 +37,15 @@ export function VarianceChart({ data, loading, error }: VarianceChartProps) {
 
   const chartData = data.map((d) => ({
     ...d,
-    periodLabel: formatDate(d.periodEnd),
+    periodLabel: formatChartDate(d.periodEnd),
   }));
 
   const latest = data[data.length - 1];
   const summary = latest
-    ? `${data.length} period${data.length === 1 ? "" : "s"} through ${formatDate(latest.periodEnd)}. ` +
-      `Latest revenue ${formatCurrencyDetailed(latest.revenue)}, ` +
-      `expenses ${formatCurrencyDetailed(latest.expenses)}, ` +
-      `net income ${formatCurrencyDetailed(latest.netIncome)}.`
+    ? `${data.length} period${data.length === 1 ? "" : "s"} through ${formatChartDate(latest.periodEnd)}. ` +
+      `Latest revenue ${formatCurrency(latest.revenue)}, ` +
+      `expenses ${formatCurrency(latest.expenses)}, ` +
+      `net income ${formatCurrency(latest.netIncome)}.`
     : undefined;
 
   return (
@@ -78,11 +57,11 @@ export function VarianceChart({ data, loading, error }: VarianceChartProps) {
       <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
         <XAxis dataKey="periodLabel" tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
-        <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
+        <YAxis tickFormatter={formatCompact} tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
         <Tooltip
           content={
             <ChartTooltip
-              valueFormatter={(v, name) => formatCurrencyDetailed(v)}
+              valueFormatter={(v, name) => formatCurrency(v)}
               labelFormatter={(lbl) => lbl}
             />
           }

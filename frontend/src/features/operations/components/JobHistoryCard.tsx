@@ -13,6 +13,7 @@ import { EmptyState } from "../../../components/ui/EmptyState";
 import { GlassCard } from "../../../components/ui/GlassCard";
 import { StatusChip } from "../../../components/ui/StatusChip";
 import type { OpsJobHistoryEntry, OpsJobType } from "../../../types/jobs";
+import { formatDateTime } from "../../../utils/dateFormat";
 
 export type JobHistoryCardProps = {
   entries: OpsJobHistoryEntry[];
@@ -25,14 +26,6 @@ const TYPE_LABELS: Record<OpsJobType, string> = {
   ingest: "Transaction Ingest",
 };
 
-function formatWhen(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
-}
-
 export function JobHistoryCard({ entries }: JobHistoryCardProps) {
   const rows = useMemo(
     () =>
@@ -40,7 +33,7 @@ export function JobHistoryCard({ entries }: JobHistoryCardProps) {
         id: entry.task_id,
         task_id: entry.task_id,
         type: TYPE_LABELS[entry.type],
-        triggered_at: formatWhen(entry.triggered_at),
+        triggered_at: formatDateTime(entry.triggered_at),
         status: entry.status,
       })),
     [entries],
@@ -94,6 +87,7 @@ export function JobHistoryCard({ entries }: JobHistoryCardProps) {
             <DataTable
               rows={rows}
               columns={columns}
+              exportFileName="job-history"
               hideFooterSelectedRowCount
               initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
               pageSizeOptions={[10]}

@@ -23,6 +23,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { CashflowAreaChart } from "@/features/dashboard/components/CashflowAreaChart";
 import { VarianceChart } from "@/features/dashboard/components/VarianceChart";
 import type { CashflowPoint, VarianceDataPoint } from "@/types/dashboard";
+import { formatCompact } from "@/utils/financialFormat";
 
 export type ReportDetailChartsProps = {
   reportType: string;
@@ -36,12 +37,6 @@ export type ReportDetailChartsProps = {
 const REV_COLORS = ["#1976d2", "#2e7d32", "#ed6c02"];
 const EXP_COLORS = ["#c62828", "#6a1b9a", "#455a64"];
 const LIQ_COLORS = ["#1976d2", "#00897b", "#5c6bc0"];
-
-function formatCompact(value: number): string {
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(0);
-}
 
 function ReportDetailChartsInner({
   reportType,
