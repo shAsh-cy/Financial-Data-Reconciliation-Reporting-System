@@ -28,6 +28,8 @@ export type KPICardProps = {
   prefix?: string;
   suffix?: string;
   decimals?: number;
+  /** Disable the card's own entrance so a parent stagger container can orchestrate it. */
+  animateEntrance?: boolean;
 };
 
 function deltaColor(type: DeltaType): string {
@@ -58,13 +60,14 @@ export function KPICard({
   prefix,
   suffix,
   decimals = 0,
+  animateEntrance = true,
 }: KPICardProps) {
   const theme = useTheme();
   const accent = theme.palette.primary.main;
   const chartData = sparklineData?.map((v, i) => ({ i, v })) ?? [];
 
   return (
-    <GlassCard {...(glowColor !== undefined ? { glowColor } : {})}>
+    <GlassCard animateEntrance={animateEntrance} {...(glowColor !== undefined ? { glowColor } : {})}>
       <CardContent>
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {label}
