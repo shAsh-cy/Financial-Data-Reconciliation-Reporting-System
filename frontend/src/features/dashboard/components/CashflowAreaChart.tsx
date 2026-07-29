@@ -13,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { ChartTooltip, CHART_ANIMATION } from "@/components/charts";
+import { ChartFrame, ChartTooltip, CHART_ANIMATION } from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import type { CashflowPoint } from "@/types/dashboard";
@@ -58,6 +58,12 @@ export function CashflowAreaChart({ data, loading }: CashflowAreaChartProps) {
         {data.length === 0 ? (
           <Typography color="text.secondary">No series yet.</Typography>
         ) : (
+          <ChartFrame
+            label="Area chart of net income used as a cashflow proxy, by period"
+            summary={`${data.length} period${data.length === 1 ? "" : "s"}. Latest ${formatCompact(
+              data[data.length - 1]?.cashflow ?? 0,
+            )}.`}
+          >
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
@@ -92,6 +98,7 @@ export function CashflowAreaChart({ data, loading }: CashflowAreaChartProps) {
               />
             </AreaChart>
           </ResponsiveContainer>
+          </ChartFrame>
         )}
       </CardContent>
     </GlassCard>

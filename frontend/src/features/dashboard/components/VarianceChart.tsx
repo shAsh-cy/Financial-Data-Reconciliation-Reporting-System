@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { ChartTooltip, CHART_ANIMATION } from "@/components/charts";
+import { ChartFrame, ChartTooltip, CHART_ANIMATION } from "@/components/charts";
 import type { VarianceDataPoint } from "@/types/dashboard";
 
 type VarianceChartProps = {
@@ -61,7 +61,19 @@ export function VarianceChart({ data, loading, error }: VarianceChartProps) {
     periodLabel: formatDate(d.periodEnd),
   }));
 
+  const latest = data[data.length - 1];
+  const summary = latest
+    ? `${data.length} period${data.length === 1 ? "" : "s"} through ${formatDate(latest.periodEnd)}. ` +
+      `Latest revenue ${formatCurrencyDetailed(latest.revenue)}, ` +
+      `expenses ${formatCurrencyDetailed(latest.expenses)}, ` +
+      `net income ${formatCurrencyDetailed(latest.netIncome)}.`
+    : undefined;
+
   return (
+    <ChartFrame
+      label="Line chart of revenue, expenses and net income by period"
+      {...(summary ? { summary } : {})}
+    >
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -109,5 +121,6 @@ export function VarianceChart({ data, loading, error }: VarianceChartProps) {
         />
       </LineChart>
     </ResponsiveContainer>
+    </ChartFrame>
   );
 }

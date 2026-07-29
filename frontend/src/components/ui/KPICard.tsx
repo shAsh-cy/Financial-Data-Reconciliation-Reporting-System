@@ -78,6 +78,9 @@ export function KPICard({
         {delta !== undefined && (
           <Typography
             variant="caption"
+            aria-label={`${
+              deltaType === "positive" ? "Up" : deltaType === "negative" ? "Down" : "Unchanged,"
+            } ${Math.abs(delta).toFixed(1)} percent`}
             sx={{ display: "flex", alignItems: "center", mt: 0.5, color: deltaColor(deltaType) }}
           >
             <DeltaIcon type={deltaType} />
@@ -85,7 +88,9 @@ export function KPICard({
           </Typography>
         )}
         {chartData.length > 0 && (
-          <Box sx={{ mt: 2, height: 48 }}>
+          // Decorative: the sparkline restates the trend already announced by
+          // the value and delta above, so it is hidden from assistive tech.
+          <Box sx={{ mt: 2, height: 48 }} aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                 <YAxis hide domain={["dataMin", "dataMax"]} />

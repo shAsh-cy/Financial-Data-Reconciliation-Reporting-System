@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Sector, Tooltip } from "recharts";
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 
-import { ChartTooltip, CHART_ANIMATION } from "@/components/charts";
+import { ChartFrame, ChartTooltip, CHART_ANIMATION, describeSlices } from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import type { MatchSlice } from "@/types/dashboard";
@@ -77,6 +77,10 @@ export function MatchRatioPieChart({ data, loading }: MatchRatioPieChartProps) {
         {data.length === 0 ? (
           <Typography color="text.secondary">No reconciliation data yet.</Typography>
         ) : (
+          <ChartFrame
+            label="Donut chart of matched versus unmatched reconciliation lines"
+            summary={`${pct.toFixed(0)} percent matched. ${describeSlices(data)}.`}
+          >
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
@@ -123,6 +127,7 @@ export function MatchRatioPieChart({ data, loading }: MatchRatioPieChartProps) {
               <Legend />
             </PieChart>
           </ResponsiveContainer>
+          </ChartFrame>
         )}
       </CardContent>
     </GlassCard>

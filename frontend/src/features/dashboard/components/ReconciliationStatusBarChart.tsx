@@ -14,7 +14,13 @@ import {
   YAxis,
 } from "recharts";
 
-import { ChartTooltip, CHART_ANIMATION, statusBarColor } from "@/components/charts";
+import {
+  ChartFrame,
+  ChartTooltip,
+  CHART_ANIMATION,
+  describeSlices,
+  statusBarColor,
+} from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import type { ReconciliationStatusSummary } from "@/types/dashboard";
@@ -58,6 +64,10 @@ export function ReconciliationStatusBarChart({
         ) : chartData.length === 0 ? (
           <Typography color="text.secondary">No runs in scope.</Typography>
         ) : (
+          <ChartFrame
+            label="Horizontal bar chart of reconciliation runs by outcome"
+            summary={describeSlices(chartData)}
+          >
           <ResponsiveContainer width="100%" height={260}>
             <BarChart
               layout="vertical"
@@ -93,6 +103,7 @@ export function ReconciliationStatusBarChart({
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          </ChartFrame>
         )}
       </CardContent>
     </GlassCard>

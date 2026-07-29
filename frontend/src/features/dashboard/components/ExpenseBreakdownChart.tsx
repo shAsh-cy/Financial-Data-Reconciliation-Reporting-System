@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { ChartTooltip, CHART_ANIMATION } from "@/components/charts";
+import { ChartFrame, ChartTooltip, CHART_ANIMATION, describeSlices } from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 
@@ -70,6 +70,10 @@ export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartPr
         {data.length === 0 ? (
           <Typography color="text.secondary">No PnL data yet.</Typography>
         ) : (
+          <ChartFrame
+            label="Bar chart of the expense mix for the latest profit and loss report"
+            summary={describeSlices(data, formatCurrencyDetailed)}
+          >
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data} margin={{ top: 24, right: 8, left: 0, bottom: 0 }}>
               <defs>
@@ -106,6 +110,7 @@ export function ExpenseBreakdownChart({ data, loading }: ExpenseBreakdownChartPr
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          </ChartFrame>
         )}
       </CardContent>
     </GlassCard>

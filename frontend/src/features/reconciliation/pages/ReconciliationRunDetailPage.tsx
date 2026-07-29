@@ -35,7 +35,7 @@ import {
 } from "recharts";
 
 import { apiErrorDetail } from "@/api/errors";
-import { CHART_ANIMATION, ChartTooltip } from "@/components/charts";
+import { CHART_ANIMATION, ChartFrame, ChartTooltip, describeSlices } from "@/components/charts";
 import { DataTable } from "@/components/ui/DataTable";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { KPICard } from "@/components/ui/KPICard";
@@ -369,6 +369,10 @@ export function ReconciliationRunDetailPage() {
                   {matchPieData.length === 0 ? (
                     <Typography color="text.secondary">No counts.</Typography>
                   ) : (
+                    <ChartFrame
+                      label="Donut chart of matched versus unmatched lines for this run"
+                      summary={describeSlices(matchPieData)}
+                    >
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie
@@ -393,6 +397,7 @@ export function ReconciliationRunDetailPage() {
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
+                    </ChartFrame>
                   )}
                 </CardContent>
               </GlassCard>
@@ -406,6 +411,10 @@ export function ReconciliationRunDetailPage() {
                   {barData.length === 0 ? (
                     <Typography color="text.secondary">No breakdown.</Typography>
                   ) : (
+                    <ChartFrame
+                      label="Bar chart of mismatch distribution by type"
+                      summary={barData.map((d) => `${d.name} ${d.count}`).join(", ")}
+                    >
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -421,6 +430,7 @@ export function ReconciliationRunDetailPage() {
                         />
                       </BarChart>
                     </ResponsiveContainer>
+                    </ChartFrame>
                   )}
                 </CardContent>
               </GlassCard>
@@ -434,6 +444,10 @@ export function ReconciliationRunDetailPage() {
                   {timelineData.length === 0 ? (
                     <Typography color="text.secondary">No timeline points.</Typography>
                   ) : (
+                    <ChartFrame
+                      label="Line chart of matched and unmatched lines over time"
+                      summary={`${timelineData.length} point${timelineData.length === 1 ? "" : "s"} in the run timeline.`}
+                    >
                     <ResponsiveContainer width="100%" height={260}>
                       <LineChart data={timelineData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -463,6 +477,7 @@ export function ReconciliationRunDetailPage() {
                         />
                       </LineChart>
                     </ResponsiveContainer>
+                    </ChartFrame>
                   )}
                 </CardContent>
               </GlassCard>

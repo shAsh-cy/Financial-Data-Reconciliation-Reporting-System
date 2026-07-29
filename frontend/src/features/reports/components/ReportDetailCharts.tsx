@@ -18,7 +18,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { CHART_ANIMATION, ChartTooltip } from "@/components/charts";
+import { CHART_ANIMATION, ChartFrame, ChartTooltip, describeSlices } from "@/components/charts";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CashflowAreaChart } from "@/features/dashboard/components/CashflowAreaChart";
 import { VarianceChart } from "@/features/dashboard/components/VarianceChart";
@@ -71,6 +71,10 @@ function ReportDetailChartsInner({
               {liquiditySlices.length === 0 ? (
                 <Typography color="text.secondary">No breakdown rows.</Typography>
               ) : (
+                <ChartFrame
+                  label="Donut chart of liquidity asset composition"
+                  summary={describeSlices(liquiditySlices, formatCompact)}
+                >
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
@@ -93,6 +97,7 @@ function ReportDetailChartsInner({
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+                </ChartFrame>
               )}
             </CardContent>
           </GlassCard>
@@ -103,6 +108,10 @@ function ReportDetailChartsInner({
               <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                 Category weights
               </Typography>
+              <ChartFrame
+                label="Bar chart of liquidity category weights"
+                summary={describeSlices(categoryBar, formatCompact)}
+              >
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={categoryBar} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -118,6 +127,7 @@ function ReportDetailChartsInner({
                   />
                 </BarChart>
               </ResponsiveContainer>
+              </ChartFrame>
             </CardContent>
           </GlassCard>
         </Grid>
@@ -158,6 +168,10 @@ function ReportDetailChartsInner({
             {categoryBar.length === 0 ? (
               <Typography color="text.secondary">No expense categories.</Typography>
             ) : (
+              <ChartFrame
+                label="Bar chart of expense categories"
+                summary={describeSlices(categoryBar, formatCompact)}
+              >
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={categoryBar} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -173,6 +187,7 @@ function ReportDetailChartsInner({
                   />
                 </BarChart>
               </ResponsiveContainer>
+              </ChartFrame>
             )}
           </CardContent>
         </GlassCard>
@@ -187,6 +202,10 @@ function ReportDetailChartsInner({
             {revenueSlices.length === 0 ? (
               <Typography color="text.secondary">No revenue split.</Typography>
             ) : (
+              <ChartFrame
+                label="Donut chart of revenue composition"
+                summary={describeSlices(revenueSlices, formatCompact)}
+              >
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
@@ -209,6 +228,7 @@ function ReportDetailChartsInner({
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
+              </ChartFrame>
             )}
           </CardContent>
         </GlassCard>
@@ -223,6 +243,10 @@ function ReportDetailChartsInner({
             {expenseSlices.length === 0 ? (
               <Typography color="text.secondary">No expense split.</Typography>
             ) : (
+              <ChartFrame
+                label="Donut chart of expense composition"
+                summary={describeSlices(expenseSlices, formatCompact)}
+              >
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
@@ -245,6 +269,7 @@ function ReportDetailChartsInner({
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
+              </ChartFrame>
             )}
           </CardContent>
         </GlassCard>

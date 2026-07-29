@@ -62,6 +62,9 @@ export function StatusChip({ status, sx, ...props }: StatusChipProps) {
       color={config.color}
       size="small"
       variant="outlined"
+      // Colour alone must not carry the meaning: name the status explicitly so
+      // assistive tech announces "Status: Failed" rather than just "Failed".
+      aria-label={`Status: ${config.label}`}
       sx={mergedSx}
       {...props}
     />
