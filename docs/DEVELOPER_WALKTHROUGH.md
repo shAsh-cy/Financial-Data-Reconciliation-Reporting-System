@@ -33,7 +33,22 @@ npm install
 npm run dev
 ```
 
-Point the UI at the API with `VITE_API_BASE_URL` (see `frontend/src/utils/env.ts`). The default assumes the API is reachable at the same origin or the value you set for local dev.
+### Pointing the UI at the API
+
+`VITE_API_BASE_URL` must be an **origin only**. The axios client already appends
+`/api/v1/...` to every request path, so a value that includes that prefix
+produces `/api/v1/api/v1/...` and every detail route returns **404**.
+
+| Value | Result |
+|-------|--------|
+| *(unset — recommended in dev)* | Same-origin requests; Vite proxies `/api` → FastAPI |
+| `http://127.0.0.1:8000` | Correct — calls the backend directly |
+| `http://127.0.0.1:8000/api/v1` | **Wrong** — doubled prefix, 404s on detail routes |
+
+`frontend/src/utils/env.ts` defensively strips a trailing `/api/v1`, but do not
+rely on that — set the origin.
+
+Set `VITE_DEMO_MODE=true` to force the demo banner on regardless of API responses.
 
 ### Frontend layout
 

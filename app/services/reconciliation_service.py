@@ -52,7 +52,25 @@ def _aggregation_payload(counts: dict[str, int]) -> dict[str, object]:
 
 
 class ReconciliationService:
-    """Read-side reconciliation operations (repository-backed + deterministic demo IDs)."""
+    """Read-side reconciliation operations (repository-backed + deterministic demo IDs).
+
+    Demo resolution policy — intentional, and different from the list endpoints:
+
+    ``REPORTING_DEMO_FALLBACK`` gates whether *list* endpoints substitute demo
+    rows for an empty database. Detail and item reads here deliberately ignore
+    that flag: a run UUID minted by ``reporting_demo.py`` always resolves, even
+    when the flag is off and even when the run was never written to Postgres.
+
+    The reason is link integrity — a demo run surfaced by the runs list must not
+    404 when the operator opens it, and the flag can be flipped between those two
+    requests. The ids are ``uuid5`` values from a fixed namespace, so they cannot
+    collide with real runs.
+
+    Note that demo items carry an ``amount`` that has no column in
+    ``reconciliation_items``; it exists in the schema for the demo path only, so
+    DB-backed items return ``None`` there. See ``ReportService`` for the mirror
+    of this policy.
+    """
 
     @staticmethod
     async def get_run_detail(

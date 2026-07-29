@@ -235,13 +235,7 @@ export function Sidebar({
               onClick={variant === "temporary" ? onClose : undefined}
               selected={active}
               aria-label={label}
-              onMouseDown={() => {
-                try {
-                  localStorage.setItem("last-active-nav", to);
-                } catch {
-                  // restricted storage
-                }
-              }}
+              aria-current={active ? "page" : undefined}
               sx={navItemSx()}
             >
               <ListItemIcon

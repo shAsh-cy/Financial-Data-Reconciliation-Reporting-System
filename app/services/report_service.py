@@ -29,7 +29,27 @@ def _database_unavailable() -> HTTPException:
 
 
 class ReportService:
-    """Read-side financial report operations (repository-backed + deterministic demo IDs)."""
+    """Read-side financial report operations (repository-backed + deterministic demo IDs).
+
+    Demo resolution policy — intentional, and different from the list endpoints:
+
+    ``REPORTING_DEMO_FALLBACK`` gates whether *list* endpoints substitute demo
+    rows for an empty database. Detail reads here deliberately ignore that flag:
+    a UUID minted by ``reporting_demo.py`` always resolves, even when the flag is
+    off and even when the row was never written to Postgres.
+
+    The reason is link integrity. A demo id surfaced by a list must not 404 when
+    the operator clicks through to it, and the flag can be flipped between those
+    two requests. The ids are ``uuid5`` values from a fixed namespace, so they
+    cannot collide with real records.
+
+    Operational consequence: in production, a caller who knows a demo UUID can
+    read synthetic data from this endpoint regardless of the flag. That is
+    acceptable because the payload is fabricated and contains no tenant data,
+    but it does mean ``REPORTING_DEMO_FALLBACK=false`` is not a complete
+    "no synthetic data is reachable" switch. See
+    ``ReconciliationService`` for the mirror of this policy.
+    """
 
     @staticmethod
     async def get_report_detail(
