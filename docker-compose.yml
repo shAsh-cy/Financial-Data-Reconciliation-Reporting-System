@@ -37,6 +37,9 @@ services:
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      # This stack sets APP_ENV=production, so synthetic data is off unless you
+      # opt in. Set REPORTING_DEMO_FALLBACK=true to demo against an empty DB.
+      REPORTING_DEMO_FALLBACK: ${REPORTING_DEMO_FALLBACK:-false}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
