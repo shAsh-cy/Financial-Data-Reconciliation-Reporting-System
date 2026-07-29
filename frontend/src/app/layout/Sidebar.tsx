@@ -109,7 +109,9 @@ export function Sidebar({
         boxShadow: "2px 0 12px rgba(15, 23, 42, 0.06)",
       };
 
-  function navItemSx(active: boolean) {
+  // Active styling is driven by MUI's `.Mui-selected` class, set via the
+  // `selected` prop from useLocation().
+  function navItemSx() {
     const base = {
       borderRadius: 1.5,
       mb: 0.5,
@@ -240,7 +242,7 @@ export function Sidebar({
                   // restricted storage
                 }
               }}
-              sx={navItemSx(active)}
+              sx={navItemSx()}
             >
               <ListItemIcon
                 className="nav-icon"

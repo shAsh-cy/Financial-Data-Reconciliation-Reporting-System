@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class TokenResponse(BaseModel):
@@ -15,11 +15,10 @@ class TokenResponse(BaseModel):
 class UserRead(BaseModel):
     """Public user representation."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     email: EmailStr
     full_name: str | None
     role: str
-
-    class Config:
-        from_attributes = True
 
